@@ -1,0 +1,67 @@
+cff-version: 1.2.0
+message: >-
+  If you use this software, please cite it using the metadata below. Please
+  also cite the underlying connectome datasets it builds on (see references).
+title: "FruitFlyBrain: Drosophila connectome datasets & projects"
+abstract: >-
+  An organized workspace bundling officially released Drosophila melanogaster
+  brain connectome data (Janelia FlyEM hemibrain v1.2 and Princeton FlyWire
+  FAFB annotations) with five runnable projects: connectome graph analysis, a
+  whole-brain neurotransmitter atlas, a synaptic pathway tracer, a
+  connectome-constrained neural-network simulation, and a 3D neuron viewer.
+type: software
+authors:
+  - given-names: Rohit
+    alias: ROHITCRAFTSYT
+    email: ytrohitcrafts@gmail.com
+version: "1.0.0"
+date-released: "2026-09-19"
+license: MIT
+repository-code: "https://github.com/ROHITCRAFTSYT/FruitFlyBrain"
+url: "https://github.com/ROHITCRAFTSYT/FruitFlyBrain"
+keywords:
+  - connectome
+  - Drosophila
+  - neuroscience
+  - computational neuroscience
+  - hemibrain
+  - FlyWire
+  - network analysis
+  - NAVis
+references:
+  - type: article
+    title: "A connectome and analysis of the adult Drosophila central brain"
+    authors:
+      - family-names: Scheffer
+        given-names: Louis K.
+      - family-names: Xu
+        given-names: C. Shan
+    journal: eLife
+    volume: "9"
+    year: 2020
+    doi: 10.7554/eLife.57443
+    notes: "Janelia FlyEM hemibrain dataset (CC BY 4.0)."
+  - type: article
+    title: "Neuronal wiring diagram of an adult brain"
+    authors:
+      - family-names: Dorkenwald
+        given-names: Sven
+      - family-names: Matsliah
+        given-names: Arie
+    journal: Nature
+    volume: "634"
+    year: 2024
+    doi: 10.1038/s41586-024-07558-y
+    notes: "FlyWire FAFB connectome (CC BY 4.0)."
+  - type: article
+    title: "Whole-brain annotation and multi-connectome cell typing of Drosophila"
+    authors:
+      - family-names: Schlegel
+        given-names: Philipp
+      - family-names: Yin
+        given-names: Yijie
+    journal: Nature
+    volume: "634"
+    year: 2024
+    doi: 10.1038/s41586-024-07686-5
+    notes: "FlyWire FAFB annotations used by Project 2 (CC BY 4.0)."
