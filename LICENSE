@@ -19,10 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----------------------------------------------------------------------------
-NOTE ON DATA: This license covers only the source code and documentation in
-this repository. The connectome datasets it downloads are the property of
-their respective owners and are distributed under their own licenses
-(CC BY 4.0): the Janelia FlyEM hemibrain dataset and the FlyWire FAFB
-annotations. See datasets/README.md for provenance, citations and terms.
