@@ -1,0 +1,14 @@
+{
+  "random_forest": {
+    "accuracy": 0.8815,
+    "macro_f1": 0.8474
+  },
+  "mlp": {
+    "accuracy": 0.8756,
+    "macro_f1": 0.8482
+  },
+  "baseline_majority": {
+    "accuracy": 0.1125,
+    "macro_f1": 0.0
+  }
+}

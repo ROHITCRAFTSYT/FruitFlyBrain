@@ -1,0 +1,8 @@
+{
+  "embedding_dim": 128,
+  "n_clusters": 53,
+  "labelled_neurons": 18590,
+  "adjusted_rand_index": 0.2726,
+  "normalized_mutual_info": 0.5931,
+  "mean_cluster_purity": 0.6305
+}

@@ -6,8 +6,9 @@
 ![Projects](https://img.shields.io/badge/Projects-5%20working-success.svg)
 
 An organized, self-contained workspace built around **officially released fruit
-fly (*Drosophila melanogaster*) brain connectome data**, with **five working,
-runnable projects** that analyze, trace, simulate and visualize the fly brain.
+fly (*Drosophila melanogaster*) brain connectome data**, with **eight working,
+runnable projects** that analyze, trace, simulate, visualize and **train
+machine-learning models on** the fly brain.
 
 Everything here comes from reputable primary sources (Janelia HHMI and the
 Princeton/MRC FlyWire consortium), was downloaded with **no login required**,
@@ -46,10 +47,14 @@ python download_datasets.py          # fetch the connectome data (~275 MB, first
 .venv\Scripts\python projects\03_shortest_path_circuits\trace.py
 .venv\Scripts\python projects\04_connectome_neural_network\simulate.py
 .venv\Scripts\python projects\05_navis_3d_viewer\view_neurons.py
+.venv\Scripts\python projects\06_celltype_classifier\train_classifier.py
+.venv\Scripts\python projects\07_neuron_embeddings\embed_and_cluster.py
+.venv\Scripts\python projects\08_synapse_link_prediction\link_prediction.py
 ```
 
 Each script writes figures and CSV tables into its own `outputs/` folder and
-prints a summary to the console.
+prints a summary to the console. **Résumé bullets** with all the ML metrics are
+in [`RESUME.md`](RESUME.md).
 
 ---
 
@@ -106,8 +111,42 @@ Renders neuron shapes as a static multi-view PNG **and an interactive 3D HTML**
 
 ---
 
+## 🤖 Machine-learning projects
+
+These train real models on the connectome and report reproducible, held-out
+metrics. Full write-ups in each folder; résumé bullets in [`RESUME.md`](RESUME.md).
+
+### 6 · [Connectivity-based cell-type classifier](projects/06_celltype_classifier) &nbsp;·&nbsp; supervised
+Predicts a neuron's cell-type family from its synaptic fingerprint alone.
+RandomForest + neural net reach **88% accuracy / 0.85 macro-F1** across **53
+cell-type families** (18,590 neurons) vs. an 11% majority baseline. ✔
+
+<p align="center">
+  <img src="projects/06_celltype_classifier/outputs/confusion_matrix.png" width="46%" alt="Cell-type confusion matrix">
+  <img src="projects/06_celltype_classifier/outputs/feature_importance.png" width="46%" alt="Feature importance">
+</p>
+
+### 7 · [Neuron embeddings & unsupervised cell typing](projects/07_neuron_embeddings) &nbsp;·&nbsp; unsupervised
+Learns 128-d neuron embeddings from the wiring and recovers known cell types
+**without labels** — **NMI 0.59**, 63% mean cluster purity. ✔
+
+<p align="center">
+  <img src="projects/07_neuron_embeddings/outputs/tsne_embedding.png" width="60%" alt="t-SNE of neuron embeddings">
+</p>
+
+### 8 · [Synapse link prediction](projects/08_synapse_link_prediction) &nbsp;·&nbsp; graph ML
+Predicts whether one neuron synapses onto another, with a leakage-free edge
+split. Gradient boosting on graph embeddings hits **0.97 ROC-AUC / 0.97
+PR-AUC** on held-out connections. ✔
+
+<p align="center">
+  <img src="projects/08_synapse_link_prediction/outputs/roc_pr_curves.png" width="70%" alt="ROC and PR curves">
+</p>
+
+---
+
 ## Environment used
-Python 3.12 · pandas 3.0 · numpy 2.5 · networkx 3.6 · matplotlib 3.11 · scipy 1.18 · navis 1.12 · plotly 7.1
+Python 3.12 · pandas 3.0 · numpy 2.5 · networkx 3.6 · matplotlib 3.11 · scipy 1.18 · scikit-learn 1.9 · navis 1.12 · plotly 7.1
 
 ## Going further
 - **FlyWire synapse-level edges:** free account on [Codex](https://codex.flywire.ai)

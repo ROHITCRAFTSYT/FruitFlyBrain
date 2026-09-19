@@ -9,3 +9,5 @@ scipy>=1.10
 navis>=1.5
 plotly>=5.0
 neuprint-python>=0.4      # optional: fetch real neurons by bodyId (free token)
+# Projects 6-8 (machine learning on the connectome):
+scikit-learn>=1.3

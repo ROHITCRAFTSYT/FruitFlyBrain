@@ -1,0 +1,7 @@
+{
+  "train_pairs": 240000,
+  "test_pairs": 80000,
+  "features": 69,
+  "roc_auc": 0.9711,
+  "pr_auc_average_precision": 0.9684
+}
