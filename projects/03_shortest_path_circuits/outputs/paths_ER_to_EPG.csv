@@ -1,0 +1,6 @@
+type_path,hops,path_cost
+ER4m -> EPG,1,0.0175
+ER5 -> ExR1 -> EPG,2,0.0275
+ER5 -> ExR1 -> EL -> EPG,3,0.0294
+ER4m -> EPG -> ExR6,3,0.0321
+ER5 -> EL -> EPG,2,0.033

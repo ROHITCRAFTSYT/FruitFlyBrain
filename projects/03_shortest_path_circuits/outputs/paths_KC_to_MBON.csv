@@ -1,0 +1,6 @@
+type_path,hops,path_cost
+KCg-s2 -> MBON05,1,0.0057
+KCg-s1 -> MBON09,1,0.007
+KCg-s1 -> MBON05,1,0.0072
+KCg-s2 -> MBON05 -> MBON30,2,0.0077
+KCg-s1 -> APL -> DPM -> MBON05,3,0.008

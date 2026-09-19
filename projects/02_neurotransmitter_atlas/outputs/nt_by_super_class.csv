@@ -1,0 +1,11 @@
+scl,acetylcholine,dopamine,gaba,glutamate,octopamine,serotonin,unknown
+ascending,1135,9,312,148,11,116,19
+central,14573,5705,4669,7066,18,340,12
+descending,873,12,148,182,10,65,13
+endocrine,30,2,4,5,13,20,6
+motor,81,0,3,14,3,9,0
+optic,51407,26,12656,13291,20,94,47
+sensory,10683,129,937,3006,117,1553,482
+sensory_ascending,428,3,22,65,2,69,23
+visual_centrifugal,98,21,297,79,14,15,0
+visual_projection,6885,2,123,1019,8,1,0

@@ -1,0 +1,6 @@
+Hemibrain v1.2 connectome graph summary
+neurons=21739 edges=3550403 synapses=14329229
+density=0.007513 reciprocity=0.368
+backbone(weight>=10): nodes=20809 edges=305058
+largest weakly-connected component=20805
+largest strongly-connected component=16534

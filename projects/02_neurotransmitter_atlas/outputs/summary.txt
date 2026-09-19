@@ -1,0 +1,8 @@
+FlyWire FAFB whole-brain census
+total neurons=139248
+super_classes=10 cell_types=8840
+side counts:
+  left=69956
+  right=69088
+  center=174
+  na=30

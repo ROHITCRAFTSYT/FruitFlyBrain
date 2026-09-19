@@ -1,0 +1,19 @@
+# Python virtual environment (636 MB, recreate with requirements.txt)
+.venv/
+__pycache__/
+*.pyc
+
+# Downloaded connectome data (large + reproducible).
+# Recreate with:  python download_datasets.py   (see datasets/README.md)
+datasets/hemibrain/*
+datasets/flywire_fafb/*
+# ...but keep the provenance docs tracked:
+!datasets/hemibrain/
+!datasets/flywire_fafb/
+!datasets/**/README.md
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

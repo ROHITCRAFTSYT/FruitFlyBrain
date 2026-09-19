@@ -1,0 +1,12 @@
+Connectome-constrained simulation (hemibrain central complex)
+neurons=1968 internal_connections=243743
+stimulated=EPG (50 neurons) steps=60 gain=0.9
+top downstream types by peak activity:
+  EL=0.1404
+  ER6=0.1076
+  Delta7=0.1059
+  PEG=0.0864
+  PEN_b(PEN2)=0.0708
+  PEN_a(PEN1)=0.0666
+  FB4Y=0.0654
+  ER4m=0.0646

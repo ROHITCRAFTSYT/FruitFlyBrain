@@ -1,0 +1,11 @@
+# FruitFlyBrain example projects - Python dependencies
+# Install:  python -m venv .venv && .venv\Scripts\pip install -r requirements.txt
+pandas>=2.0
+numpy>=1.24
+networkx>=3.0
+matplotlib>=3.7
+scipy>=1.10
+# Project 5 (3D neuron viewer):
+navis>=1.5
+plotly>=5.0
+neuprint-python>=0.4      # optional: fetch real neurons by bodyId (free token)
