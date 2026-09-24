@@ -14,6 +14,21 @@ projects spanning network science, unsupervised learning, and graph ML.
 
 ## Résumé bullets (pick 2–4)
 
+- Built **FlyLab**, an interactive embodied-AI system where plain-English
+  commands train neural-network brains that then control **NeuroMechFly v2**
+  (a micro-CT-based *Drosophila* body) in **MuJoCo physics**. The physics fly
+  succeeded on **7 of 9** commanded tasks, including chemotaxis and phototaxis.
+- Engineered **sim-to-sim transfer**: calibrated a fast surrogate against 49
+  physics drive conditions, then diagnosed and fixed transfer failures with
+  **domain randomization using measured gait wobble**, sensory integration and
+  **common-random-number** Evolution Strategies (physics success **67% → 86%**).
+- Diagnosed **catastrophic forgetting** in a shared multi-task network (57%
+  physics success after a 9-lesson curriculum) and replaced it with **per-skill
+  brains trained continuously with physics-in-the-loop validation**,
+  keep-the-best selection and held-out physics tests.
+- Profiled and optimized a MuJoCo control loop **~20× faster** (controller
+  sub-stepping at 1 kHz with verified gait fidelity).
+
 - Built a **connectivity-based cell-type classifier** (RandomForest + neural
   net) predicting neuron identity across **53 cell-type families** from synaptic
   fingerprints, reaching **88% accuracy / 0.85 macro-F1** vs. an 11% baseline.
@@ -34,7 +49,8 @@ projects spanning network science, unsupervised learning, and graph ML.
   dataset downloader, per-project docs, MIT license and citation metadata.
 
 ## Skills demonstrated
-`Python` · `scikit-learn` · `NumPy/SciPy sparse` · `pandas` · `NetworkX` ·
+`Python` · `MuJoCo` · `NeuroMechFly/FlyGym` · `Evolution Strategies` · `sim-to-sim transfer` ·
+`domain randomization` · `scikit-learn` · `NumPy/SciPy sparse` · `pandas` · `NetworkX` ·
 `NAVis/Plotly` · graph machine learning · unsupervised learning · feature
 engineering · data visualization · reproducible research · scientific
 data pipelines

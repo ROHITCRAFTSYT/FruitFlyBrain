@@ -3,12 +3,14 @@
 [![License: MIT](https://img.shields.io/badge/Code-MIT-blue.svg)](LICENSE)
 [![Data: CC BY 4.0](https://img.shields.io/badge/Data-CC%20BY%204.0-lightgrey.svg)](datasets/README.md)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB.svg?logo=python&logoColor=white)](https://www.python.org/)
-![Projects](https://img.shields.io/badge/Projects-5%20working-success.svg)
+![Projects](https://img.shields.io/badge/Projects-9%20working-success.svg)
+[![Physics: MuJoCo](https://img.shields.io/badge/Physics-NeuroMechFly%20%2B%20MuJoCo-8a2be2.svg)](projects/09_flylab)
 
 An organized, self-contained workspace built around **officially released fruit
-fly (*Drosophila melanogaster*) brain connectome data**, with **eight working,
+fly (*Drosophila melanogaster*) brain connectome data**, with **nine working,
 runnable projects** that analyze, trace, simulate, visualize and **train
-machine-learning models on** the fly brain.
+machine-learning models on** the fly brain, including **FlyLab**, a
+physics-simulated fruit fly you teach in plain English.
 
 Everything here comes from reputable primary sources (Janelia HHMI and the
 Princeton/MRC FlyWire consortium), was downloaded with **no login required**,
@@ -19,6 +21,34 @@ this repo.
   <img src="projects/05_navis_3d_viewer/outputs/neurons_3d.png" width="90%" alt="3D fly-brain neuron morphologies"><br>
   <em>Real hemibrain neurons rendered by Project 5 (NAVis) — frontal · dorsal · lateral.</em>
 </p>
+
+---
+
+## 🎮 FlyLab — teach a physics-simulated fruit fly ([Project 09](projects/09_flylab))
+
+Type *"find the food"*, *"go to the light"* or *"turn left 90"*. The fly's brain
+**trains on that task**, and the trained brain then drives **NeuroMechFly v2**
+(EPFL; a body built from a micro-CT scan of a real *Drosophila*) in **MuJoCo
+physics**, performing your request on camera. The brain is saved after every
+lesson and rehearses old skills while learning new ones, so it keeps getting
+better across sessions.
+
+<p align="center">
+  <img src="projects/09_flylab/outputs/flylab_demo.gif" width="90%" alt="FlyLab: the physics fly finds food by smell"><br>
+  <em>A lesson, recorded by FlyLab: overhead arena, close-up of the fly, and the brain's live senses and descending drives.</em>
+</p>
+
+**Results so far:** in the recorded demo the physics fly succeeded on **7 of 9**
+commanded tasks, finding food by smell alone and walking to a lamp by sight.
+Every skill now has **its own brain and its own continuous training process**
+with physics-in-the-loop validation and a held-out physics test. Live results
+per brain are in [`projects/09_flylab/training/TRAINING.md`](projects/09_flylab/training/TRAINING.md).
+
+```bash
+python -m venv .venv-sim && .venv-sim\Scripts\pip install -r requirements-sim.txt
+cd projects\09_flylab
+..\..\.venv-sim\Scripts\python flylab.py            # then type: find the food
+```
 
 ---
 
@@ -50,6 +80,8 @@ python download_datasets.py          # fetch the connectome data (~275 MB, first
 .venv\Scripts\python projects\06_celltype_classifier\train_classifier.py
 .venv\Scripts\python projects\07_neuron_embeddings\embed_and_cluster.py
 .venv\Scripts\python projects\08_synapse_link_prediction\link_prediction.py
+
+# Project 09 (FlyLab) uses its own environment -- see the FlyLab section above
 ```
 
 Each script writes figures and CSV tables into its own `outputs/` folder and

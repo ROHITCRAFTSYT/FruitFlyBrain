@@ -1,7 +1,20 @@
-# Python virtual environment (636 MB, recreate with requirements.txt)
+# Python virtual environments (recreate with requirements*.txt)
 .venv/
+.venv-sim/
 __pycache__/
 *.pyc
+
+# FlyLab: lesson history/recordings stay local. The trained per-skill brains
+# (state/brains/*.npy, ~5 KB each) and the training reports ARE published.
+projects/09_flylab/state/brain_weights.npy
+projects/09_flylab/state/brain_history.json
+projects/09_flylab/training/*/candidate.npy
+projects/09_flylab/training/*/best.npy
+projects/09_flylab/training/*/*.tmp
+projects/09_flylab/training/logs/
+projects/09_flylab/outputs/lessons/
+projects/09_flylab/outputs/fly_diary.html
+projects/09_flylab/outputs/learning_progress.png
 
 # Downloaded connectome data (large + reproducible).
 # Recreate with:  python download_datasets.py   (see datasets/README.md)

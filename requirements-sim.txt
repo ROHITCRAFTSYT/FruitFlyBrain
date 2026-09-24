@@ -1,0 +1,7 @@
+# FlyLab (Project 09) - physics-simulated fruit fly. Separate environment because
+# FlyGym pins its own versions of numpy/numba/mujoco.
+#   python -m venv .venv-sim
+#   .venv-sim\Scripts\pip install -r requirements-sim.txt
+flygym==2.1.0          # NeuroMechFly v2 (EPFL), pulls in mujoco 3.9, numba, mediapy, imageio-ffmpeg
+matplotlib>=3.10
+pillow>=11

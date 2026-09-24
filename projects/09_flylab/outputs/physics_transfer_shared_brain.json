@@ -1,0 +1,55 @@
+{
+  "n_per_skill": 5,
+  "overall_physics_success": 0.5714285714285714,
+  "skills": [
+    {
+      "task": "walk_forward",
+      "skill": "Walk forward",
+      "n": 5,
+      "surrogate_success": 1.0,
+      "physics_success": 0.2
+    },
+    {
+      "task": "turn",
+      "skill": "Turn in place",
+      "n": 5,
+      "surrogate_success": 1.0,
+      "physics_success": 0.0
+    },
+    {
+      "task": "goto",
+      "skill": "Go to a location",
+      "n": 5,
+      "surrogate_success": 1.0,
+      "physics_success": 0.6
+    },
+    {
+      "task": "odor_seek",
+      "skill": "Find food by smell",
+      "n": 5,
+      "surrogate_success": 1.0,
+      "physics_success": 0.4
+    },
+    {
+      "task": "odor_avoid",
+      "skill": "Escape a bad smell",
+      "n": 5,
+      "surrogate_success": 1.0,
+      "physics_success": 1.0
+    },
+    {
+      "task": "light_seek",
+      "skill": "Walk toward light",
+      "n": 5,
+      "surrogate_success": 1.0,
+      "physics_success": 1.0
+    },
+    {
+      "task": "light_avoid",
+      "skill": "Hide from light",
+      "n": 5,
+      "surrogate_success": 1.0,
+      "physics_success": 0.8
+    }
+  ]
+}
