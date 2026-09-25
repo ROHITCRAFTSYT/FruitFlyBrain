@@ -21,6 +21,18 @@
     { val: 24, test: 32, thr: 0.95 }
   ];
   var SURR_PASS = 0.95;
+  var TEST_OPTIMAL = 0.90;   // optimal also needs >= 90% on the 32 held-out test arenas
+
+  // 95% Wilson confidence interval for a rate p measured on n arenas
+  function wilson(p, n) {
+    if (!n) return [0, 1];
+    var z = 1.96, c = (p + z * z / (2 * n)) / (1 + z * z / n);
+    var h = z * Math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / (1 + z * z / n);
+    return [Math.max(0, c - h), Math.min(1, c + h)];
+  }
+  function unitOf(id) {
+    return id === 'turn' ? '°' : (id === 'odor_avoid' || id === 'light_avoid') ? ' mm gained' : ' mm';
+  }
   var REFRESH_MS = 5 * 60 * 1000;
   var EVENTS_PAGE = 40;
 
@@ -95,7 +107,8 @@
     var n = b.n || (b.physics_errors ? b.physics_errors.length : 0);
     var passed = b.physics_val != null && b.physics_val >= L.thr - 1e-9 &&
       b.surrogate != null && b.surrogate >= SURR_PASS && n >= L.val;
-    if (level >= 2 && passed) return { cls: 'optimal', label: 'optimal', level: level, passed: true };
+    var t = st.test || {};
+    if (level >= 2 && passed && t.physics_test != null && t.physics_test >= TEST_OPTIMAL - 1e-9) return { cls: 'optimal', label: 'optimal', level: level, passed: true };
     if (passed) return { cls: 'passed', label: 'level ' + (level + 1) + ' of 3 · passed', level: level, passed: true };
     return { cls: 'training', label: 'level ' + (level + 1) + ' of 3', level: level, passed: false };
   }
@@ -186,7 +199,9 @@
         '<div class="card-head"><div><h3>' + esc(s[1]) + '</h3><div class="skill-id">' + id + '</div></div>' +
         '<span class="badge ' + status.cls + '">' + esc(status.label) + '</span></div>' +
         '<div class="headline"><span class="big">' + pct(t.physics_test) + '</span>' +
-        '<span class="lbl">held-out physics test' + (testCount ? ' · ' + testCount : '') + '</span></div>' +
+        '<span class="lbl">held-out physics test' + (testCount ? ' · ' + testCount : '') +
+        (t.physics_test != null && testN ? ' · 95% CI ' + wilson(t.physics_test, testN).map(pct).join('–') : '') +
+        '</span></div>' +
         '<dl class="stats">' +
         '<dt>Physics validation</dt><dd>' + pct(b.physics_val) + (valN ? ' of ' + valN : '') + '</dd>' +
         '<dt>Surrogate</dt><dd>' + pct(b.surrogate) + '</dd>' +
@@ -194,6 +209,8 @@
         '<dt>Rounds</dt><dd>' + num(st.round) + '</dd>' +
         '<dt>ES generations</dt><dd>' + num(st.generations) + '</dd>' +
         '<dt>Physics runs</dt><dd>' + num(st.physics_runs) + '</dd>' +
+        (st.rule_changes && st.rule_changes.length ? '<dt>Task rules</dt><dd>v' + esc(st.task_version) +
+          ' since round ' + num(st.rule_changes[st.rule_changes.length - 1].after_round) + '</dd>' : '') +
         (st.reseed_round ? '<dt>Last reseed</dt><dd>round ' + num(st.reseed_round) + '</dd>' : '') +
         '</dl>' + videoHtml(id, st) + '</article>';
     });
@@ -209,13 +226,13 @@
     d.textContent = text;
     return d;
   }
-  function videoHtml(id, st) {
+  function videoHtml(id, st) {  // eslint-disable-line
     var v = state.videos[id];
     if (!v || !v.file) return '<div class="video-ph">No physics video rendered yet for this skill.</div>';
     var best = st.best && st.best.round;
     var cap = 'MuJoCo physics' + (v.arena ? ' · ' + esc(v.arena) : '') +
       (v.success != null ? ' · ' + (v.success ? 'success' : 'miss') : '') +
-      (v.final_error != null ? ' · final error ' + esc(v.final_error) + ' mm' : '') +
+      (v.final_error != null ? ' · final error ' + esc(v.final_error) + unitOf(id) : '') +
       (v.brain_round != null ? ' · brain from round ' + esc(v.brain_round) : '') +
       (best != null && v.brain_round != null && v.brain_round !== best ? ' (current best is round ' + best + ')' : '');
     return '<video class="video" controls muted loop playsinline preload="none"' +
@@ -230,6 +247,9 @@
     levelUps(rows, st).forEach(function (u) { marks.push({ x: u.x, kind: 'level', label: 'level ' + (u.level + 1) }); });
     rows.forEach(function (r) {
       if (r.reseeded) marks.push({ x: r.round, kind: 'reseed', label: 'reseed' });
+      (st.rule_changes || []).forEach(function (c) {
+        if (c.after_round === r.round) marks.push({ x: r.round + 0.5, kind: 'level', label: 'new rules v' + c.version });
+      });
       if (r.restarted_from_best) marks.push({ x: r.round, kind: 'restart', label: 'restart' });
     });
     return marks;
@@ -360,6 +380,10 @@
           if (ss.cls === 'optimal') text += ' (optimal)';
         }
         ev.push({ kind: 'level', skill: s[0], round: u.after, time: u.time, text: text, after: true });
+      });
+      (st.rule_changes || []).forEach(function (c) {
+        ev.push({ kind: 'level', skill: s[0], round: c.after_round, time: c.time, after: true,
+          text: 'task rules changed to v' + c.version + ' (stricter, more realistic success test); deployed brain re-scored from level 1' });
       });
       d.rows.forEach(function (r) {
         var base = { skill: s[0], round: r.round, time: r.time || '' };

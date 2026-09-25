@@ -89,9 +89,9 @@ def outcome(task, scen, traj):
     df = float(np.hypot(x[-1] - tx, y[-1] - ty))
     if task in ("odor_avoid", "light_avoid"):
         gain = df - float(np.hypot(x[0] - tx, y[0] - ty))
-        return ok, round(gain, 1), f"moved {gain:+.1f} mm further away (pass: > 6 mm)"
+        return ok, round(gain, 1), f"moved {gain:+.1f} mm further away (pass: > {T.AVOID_GAIN_MM:.0f} mm, never approaching)"
     return ok, round(df, 2), (f"ended {df:.2f} mm from the {MARKER[task]} "
-                              f"(pass: < {T.SUCCESS_RADIUS_MM:.0f} mm)")
+                              f"(pass: < {T.SUCCESS_RADIUS_MM} mm and standing still)")
 
 
 def describe_arena(task, scen):

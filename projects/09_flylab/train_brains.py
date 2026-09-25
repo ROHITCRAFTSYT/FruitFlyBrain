@@ -81,6 +81,10 @@ SUR_EVAL_N = 96
 MASTERED_SUR = 0.95          # surrogate success needed to pass any level
 # Progressive mastery: (x the base --val/--test arena counts, physics val needed)
 LEVELS = [(1, 1.0), (2, 1.0), (4, 0.95)]
+# Optimal also needs the held-out test to agree (>= 90% of 32 unseen arenas),
+# so a brain that got lucky on the validation arenas keeps training. The test
+# set is then a stopping criterion, but it still never picks between brains.
+TEST_OPTIMAL = 0.90
 
 
 # ---------------------------------------------------------------------------
@@ -147,8 +151,7 @@ class SkillRun:
 
     @property
     def level_met(self):
-        b = self.status["best"]
-        return bool(b and b["physics_val"] >= LEVELS[self.level][1] and b["surrogate"] >= MASTERED_SUR)
+        return level_met(self.status)
 
     @property
     def proficient(self):
@@ -157,7 +160,7 @@ class SkillRun:
 
     @property
     def optimal(self):
-        return self.level == len(LEVELS) - 1 and self.level_met
+        return is_optimal(self.status)
 
     def candidate(self):
         if self.cand_path.exists():
@@ -190,6 +193,51 @@ def _atomic_write(path: Path, text: str):
 # ---------------------------------------------------------------------------
 # one training round for one skill
 # ---------------------------------------------------------------------------
+def level_met(st):
+    b = st.get("best")
+    return bool(b and b["physics_val"] >= LEVELS[st.get("level", 0)][1] and b["surrogate"] >= MASTERED_SUR)
+
+
+def is_optimal(st):
+    t = st.get("test") or {}
+    return (st.get("level", 0) == len(LEVELS) - 1 and level_met(st)
+            and t.get("physics_test", 0) >= TEST_OPTIMAL)
+
+
+def wilson(p, n, z=1.96):
+    """95% Wilson confidence interval for a success rate p measured on n arenas."""
+    if not n:
+        return 0.0, 1.0
+    c = (p + z * z / (2 * n)) / (1 + z * z / n)
+    h = z * np.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / (1 + z * z / n)
+    return max(0.0, c - h), min(1.0, c + h)
+
+
+def rescore_for_new_rules(run: SkillRun, body, n_val, n_test, say):
+    """The task's definition of success changed (tasks.TASK_VERSION): re-score the
+    deployed brain under the new rules from level 1 so every number is comparable."""
+    st, b = run.status, run.status["best"]
+    old = st.get("task_version", 1)
+    st["task_version"] = T.TASK_VERSION[run.task]
+    st["level"] = 0
+    st["stale"] = 0
+    st["reseed_round"] = st["round"]     # judge the lineage only on rounds under the new rules
+    st.setdefault("rule_changes", []).append({"after_round": st["round"], "version": st["task_version"],
+                                              "time": _now()})
+    if b and (run.dir / "best.npy").exists():
+        theta = np.load(run.dir / "best.npy")
+        sur, _ = TR.evaluate(body, theta, run.task, n=SUR_EVAL_N, seed=999)
+        pv, prew, pdet = physics_eval(theta, run.task, n_val, val_seed(run.task))
+        pt, ptrew, ptdet = physics_eval(theta, run.task, n_test, test_seed(run.task))
+        b.update(physics_val=pv, physics_reward=prew, physics_errors=pdet, surrogate=sur, n=n_val)
+        st["test"] = {"round": b["round"], "physics_test": pt, "physics_reward": ptrew,
+                      "physics_errors": ptdet, "n": n_test}
+        st["physics_runs"] += n_val + n_test
+        say(f"[{run.task}] NEW TASK RULES v{old}->v{st['task_version']}: deployed brain re-scored: "
+            f"surrogate {sur:.0%} | val {pv:.0%} of {n_val} | test {pt:.0%} of {n_test}")
+    run.save()
+
+
 def level_up(run: SkillRun, n_val, n_test, say):
     """Raise the bar: re-score the champion on the next level's larger arena sets."""
     st, b = run.status, run.status["best"]
@@ -210,6 +258,10 @@ def level_up(run: SkillRun, n_val, n_test, say):
 
 def run_round(run: SkillRun, body, n_val, n_test, say):
     st = run.status
+    if st.get("task_version", 1) != T.TASK_VERSION[run.task]:
+        rescore_for_new_rules(run, body, n_val, n_test, say)
+        write_skill_report(run)
+        write_summary()
     while run.level_met and run.level < len(LEVELS) - 1:
         level_up(run, n_val, n_test, say)
         write_skill_report(run)
@@ -331,12 +383,14 @@ def write_skill_report(run: SkillRun):
         lines += [f"| best brain | round {b['round']}: physics validation **{b['physics_val']:.0%}** "
                   f"on {b.get('n', 6)} arenas, surrogate {b['surrogate']:.0%} |"]
     if t:
+        lo, hi = wilson(t['physics_test'], t['n'])
         lines += [f"| held-out physics test | **{t['physics_test']:.0%}** on {t['n']} unseen arenas "
+                  f"(95% CI {lo:.0%}-{hi:.0%}) "
                   f"(errors: {t['physics_errors']}) |"]
     unit = {"turn": "deg from target heading (< 20 = success)",
-            "odor_avoid": "mm gained away from source (> 6 = success)",
-            "light_avoid": "mm gained away from source (> 6 = success)"}.get(
-        run.task, "mm from target at the end (< 2 = success)")
+            "odor_avoid": "mm gained away from source (> 6 without first approaching it = success)",
+            "light_avoid": "mm gained away from source (> 6 without first approaching it = success)"}.get(
+        run.task, f"mm from target at the end (< {T.SUCCESS_RADIUS_MM} and standing still = success)")
     lines += ["", f"Physics error per arena: {unit}.", "",
               "| round | level | gens | sigma | surrogate | physics val | val errors | test | note |",
               "|---:|---:|---:|---:|---:|---:|---|---:|---|"]
@@ -350,11 +404,10 @@ def write_skill_report(run: SkillRun):
 
 
 def _status_text(st):
-    b, lvl = st.get("best") or {}, st.get("level", 0)
-    met = bool(b) and b.get("physics_val", 0) >= LEVELS[lvl][1] and b.get("surrogate", 0) >= MASTERED_SUR
-    if met and lvl == len(LEVELS) - 1:
+    if is_optimal(st):
         return "**optimal**"
-    return f"level {lvl + 1}/{len(LEVELS)}" + (" (passed)" if met else "")
+    lvl = st.get("level", 0)
+    return f"level {lvl + 1}/{len(LEVELS)}" + (" (passed)" if level_met(st) else "")
 
 
 def write_summary():
@@ -369,7 +422,7 @@ def write_summary():
         rows.append(f"| [{T.PRETTY[task]}]({task}/REPORT.md) | {st['round']} | {st['generations']} | "
                     f"{st['physics_runs']} | {b.get('surrogate', 0):.0%} | "
                     f"{b.get('physics_val', 0):.0%} of {b.get('n', 6)} | "
-                    f"{('%.0f%% of %d' % (100 * t['physics_test'], t['n'])) if t else '-'} | "
+                    f"{('%.0f%% of %d (CI %.0f-%.0f%%)' % (100 * t['physics_test'], t['n'], *(100 * np.array(wilson(t['physics_test'], t['n']))))) if t else '-'} | "
                     f"{_status_text(st)} |")
     text = "\n".join([
         "# FlyLab brains — continuous training log", "",
@@ -379,7 +432,9 @@ def write_summary():
         "physics test that is never used for selection. See each skill's report for "
         "its full round-by-round history. Mastery is progressive: passing a level "
         f"(100% physics validation, >=95% surrogate) doubles the validation and test "
-        f"arena sets; a brain is **optimal** once it holds up at level {len(LEVELS)}.", "",
+        f"arena sets; a brain is **optimal** once it holds up at level {len(LEVELS)} "
+        f"(>=95% of 24 validation arenas) AND scores >={TEST_OPTIMAL:.0%} on the 32 held-out "
+        "test arenas. Test columns show 95% Wilson confidence intervals.", "",
         "| skill | rounds | ES generations | physics runs | surrogate | physics val | **physics test** | status |",
         "|---|---:|---:|---:|---:|---:|---:|---|", *rows, ""])
     _atomic_write(TRAIN_DIR / "TRAINING.md", text)

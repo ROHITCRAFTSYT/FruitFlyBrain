@@ -20,8 +20,17 @@ import numpy as np
 
 from world import wrap
 
-SUCCESS_RADIUS_MM = 2.0
+SUCCESS_RADIUS_MM = 1.5  # "arrived": thorax within ~0.6 body lengths of the target
+STOPPED_MM_S = 1.5       # ...and actually standing there (real flies stop to feed)
+STOP_WINDOW_S = 0.5
+AVOID_GAIN_MM = 6.0      # escapes must gain this much distance...
+AVOID_SLACK_MM = 0.5     # ...without ever approaching the source by more than this
 TURN_MAX_DISP_MM = 6.0   # a "turn" must not wander off (the gait can't pivot perfectly)
+STEP_S = 0.05            # trajectories are sampled at the 20 Hz brain rate
+# Bumped whenever a task's definition of success changes; the trainer then
+# re-scores the deployed brain under the new rules before training on.
+TASK_VERSION = {"walk_forward": 2, "turn": 1, "goto": 2, "odor_seek": 2,
+                "odor_avoid": 2, "light_seek": 2, "light_avoid": 2}
 
 TASKS = ["walk_forward", "turn", "goto", "odor_seek", "odor_avoid",
          "light_seek", "light_avoid"]
@@ -148,19 +157,29 @@ def score(scen: Scenario, xs, ys, ths):
     tx, ty = scen.extra["target"]
     d0 = np.hypot(xs[..., 0] - tx, ys[..., 0] - ty)
     df = np.hypot(xf - tx, yf - ty)
+    d = np.hypot(xs - tx[..., None], ys - ty[..., None])
     if t in ("odor_avoid", "light_avoid"):
+        # A blind straight sprint used to pass ~100% (the source starts 2.5-8 mm
+        # away in a random direction and 4 s of sprinting covers 60 mm). A real
+        # escape has to sense the source: it may not walk toward it first.
         gain = df - d0
-        return np.clip(gain / 8.0, -1, 1.5), gain > 6.0
+        approach = np.maximum(d0 - d.min(axis=-1), 0.0)
+        reward = np.clip(gain / 8.0, -1, 1.5) - np.clip(approach / 2.0, 0, 1.5)
+        return reward, (gain > AVOID_GAIN_MM) & (approach <= AVOID_SLACK_MM)
 
     # go-to style: walk_forward, goto, odor_seek, light_seek
-    # Reward arriving AND staying: time spent inside the target zone during the
-    # last 40% of the episode teaches the fly to stop at the goal, not orbit it.
-    d = np.hypot(xs - tx[..., None], ys - ty[..., None])
-    inside = d < SUCCESS_RADIUS_MM
-    dwell = inside[..., int(0.6 * d.shape[-1]):].mean(axis=-1)
+    # Reward arriving AND staying still: dwell only counts while the fly is
+    # slow, because the body's ~1.6 mm tightest circle fits inside the goal
+    # zone and brains learned to orbit the target instead of stopping on it.
+    speed = np.hypot(np.diff(xs, axis=-1), np.diff(ys, axis=-1)) / STEP_S
+    inside = d[..., 1:] < SUCCESS_RADIUS_MM
+    still = np.exp(-speed / STOPPED_MM_S)
+    tail = int(0.6 * speed.shape[-1])
+    dwell = (inside * still)[..., tail:].mean(axis=-1)
     progress = np.clip((d0 - df) / d0, -1, 1)
     reward = progress + 1.0 * dwell + 0.3 * inside.any(axis=-1)
-    return reward, df < SUCCESS_RADIUS_MM
+    stopped = speed[..., -int(round(STOP_WINDOW_S / STEP_S)):].mean(axis=-1) < STOPPED_MM_S
+    return reward, (df < SUCCESS_RADIUS_MM) & stopped
 
 
 # ---------------------------------------------------------------------------

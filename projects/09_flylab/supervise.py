@@ -6,7 +6,8 @@ its own brain and its own training process), at most --workers at a time,
 fewest turns first, then weakest skill. Each process trains for a time slice (--slice hours) and
 then yields its CPU core, so a hard skill can't starve the others. Crashed
 workers are logged and relaunched; results are committed and pushed to git
-every --push-every hours. It stops by itself once every skill is optimal
+every --push-every hours, and brains that changed are re-filmed in MuJoCo
+(render_brains.py) for the dashboard. It stops by itself once every skill is optimal
 (or has used up --max-rounds).
 
     ..\\..\\.venv-sim\\Scripts\\python supervise.py              # 2 workers, 1 h slices
@@ -33,7 +34,8 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
 import tasks as T
-from train_brains import LEVELS, MASTERED_SUR, TRAIN_DIR, write_summary
+from train_brains import LEVELS, TRAIN_DIR, write_summary
+from train_brains import is_optimal as optimal
 
 LOGS = TRAIN_DIR / "logs"
 REPO = HERE.parent.parent
@@ -59,10 +61,6 @@ def status(task):
     return json.loads(p.read_text()) if p.exists() else {"round": 0, "level": 0, "best": None}
 
 
-def optimal(st):
-    b, lvl = st.get("best") or {}, st.get("level", 0)
-    return (lvl == len(LEVELS) - 1 and b.get("physics_val", 0) >= LEVELS[lvl][1]
-            and b.get("surrogate", 0) >= MASTERED_SUR)
 
 
 def weakness(task):
@@ -75,9 +73,19 @@ def git(*args):
     return subprocess.run(["git", *args], cwd=REPO, capture_output=True, text=True)
 
 
+def render_videos(proc):
+    """Re-film brains that changed since their last video (real MuJoCo episodes,
+    low priority, in the background); the next push publishes them."""
+    if proc is not None and proc.poll() is None:
+        return proc                                          # still rendering
+    log = open(LOGS / "render.log", "a", encoding="utf-8")
+    return subprocess.Popen([sys.executable, "-u", "render_brains.py", "--changed-only"],
+                            cwd=HERE, stdout=log, stderr=subprocess.STDOUT, creationflags=DETACH)
+
+
 def push_progress():
     rel = HERE.relative_to(REPO).as_posix()
-    git("add", f"{rel}/training", f"{rel}/state/brains")
+    git("add", f"{rel}/training", f"{rel}/state/brains", f"{rel}/dashboard/videos")
     if not git("diff", "--cached", "--quiet").returncode:
         return                                              # nothing new
     lines = []
@@ -110,6 +118,7 @@ def main():
     say(f"supervisor started: {args.workers} workers, {args.slice} h slices")
     running: dict[str, subprocess.Popen] = {}
     crashes = {t: 0 for t in T.TASKS}
+    renderer = None
     turns = {t: 0 for t in T.TASKS}      # round-robin: fewest turns first, then weakest
     last_push = time.time()
 
@@ -143,6 +152,7 @@ def main():
 
         if args.push_every and time.time() - last_push > args.push_every * 3600:
             push_progress()
+            renderer = render_videos(renderer)
             last_push = time.time()
         time.sleep(30)
 
