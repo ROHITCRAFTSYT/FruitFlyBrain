@@ -19,9 +19,15 @@ Each skill has its OWN brain and its OWN training process. A round is:
                           brains master it in 1-2 rounds): the working copy starts
                           over from fresh random weights, with double patience.
                           The deployed brain stays until the new lineage beats it.
+  7. PROGRESSIVE LEVELS   mastering a level (100% physics validation, >=95%
+                          surrogate) raises the bar: the validation and test
+                          sets double (6 -> 12 -> 24 arenas by default), the
+                          champion is re-scored on them, and training goes on.
+                          A brain is OPTIMAL only once it holds up at the top
+                          level, so a lucky streak on a few arenas can't end it.
 
 The loop always works on the weakest skill next, keeps going until every skill
-is mastered (or the time budget runs out), and is fully resumable: stop it any
+is optimal (or the time budget runs out), and is fully resumable: stop it any
 time and run it again to continue exactly where it left off.
 
 Every round is appended to training/<skill>/log.jsonl, and each skill gets a
@@ -70,8 +76,9 @@ ROUND_GENS = 100
 PATIENCE = 4                 # rounds without a new best -> restart from best
 PLATEAU = 8                  # rounds a lineage gets to master the surrogate before a reseed
 SUR_EVAL_N = 96
-MASTERED_PHYS = 1.0          # validation success needed to count as mastered
-MASTERED_SUR = 0.95
+MASTERED_SUR = 0.95          # surrogate success needed to pass any level
+# Progressive mastery: (x the base --val/--test arena counts, physics val needed)
+LEVELS = [(1, 1.0), (2, 1.0), (4, 0.95)]
 
 
 # ---------------------------------------------------------------------------
@@ -133,9 +140,22 @@ class SkillRun:
         return (-1.0, -9.0, -1.0) if b is None else (b["physics_val"], b["physics_reward"], b["surrogate"])
 
     @property
-    def mastered(self):
+    def level(self):
+        return self.status.get("level", 0)
+
+    @property
+    def level_met(self):
         b = self.status["best"]
-        return bool(b and b["physics_val"] >= MASTERED_PHYS and b["surrogate"] >= MASTERED_SUR)
+        return bool(b and b["physics_val"] >= LEVELS[self.level][1] and b["surrogate"] >= MASTERED_SUR)
+
+    @property
+    def proficient(self):
+        """Passed the first level: good enough for FlyLab to just perform the skill."""
+        return self.level > 0 or self.level_met
+
+    @property
+    def optimal(self):
+        return self.level == len(LEVELS) - 1 and self.level_met
 
     def candidate(self):
         if self.cand_path.exists():
@@ -168,8 +188,34 @@ def _atomic_write(path: Path, text: str):
 # ---------------------------------------------------------------------------
 # one training round for one skill
 # ---------------------------------------------------------------------------
+def level_up(run: SkillRun, n_val, n_test, say):
+    """Raise the bar: re-score the champion on the next level's larger arena sets."""
+    st, b = run.status, run.status["best"]
+    st["level"] = run.level + 1
+    k = LEVELS[run.level][0]
+    theta = np.load(run.dir / "best.npy")
+    pv, prew, pdet = physics_eval(theta, run.task, n_val * k, val_seed(run.task))
+    b.update(physics_val=pv, physics_reward=prew, physics_errors=pdet, n=n_val * k)
+    pt, ptrew, ptdet = physics_eval(theta, run.task, n_test * k, test_seed(run.task))
+    st["test"] = {"round": b["round"], "physics_test": pt, "physics_reward": ptrew,
+                  "physics_errors": ptdet, "n": n_test * k}
+    st["physics_runs"] += (n_val + n_test) * k
+    st["stale"] = 0
+    run.save()
+    say(f"[{run.task}] LEVEL UP -> {run.level + 1}/{len(LEVELS)}: champion re-scored on "
+        f"{n_val * k} val arenas {pv:.0%} | {n_test * k} test arenas {pt:.0%}")
+
+
 def run_round(run: SkillRun, body, n_val, n_test, say):
     st = run.status
+    while run.level_met and run.level < len(LEVELS) - 1:
+        level_up(run, n_val, n_test, say)
+        write_skill_report(run)
+        write_summary()
+    if run.optimal:
+        return
+    k = LEVELS[run.level][0]
+    n_val, n_test = n_val * k, n_test * k
     st["round"] += 1
     r = st["round"]
     theta0 = run.candidate()
@@ -188,14 +234,15 @@ def run_round(run: SkillRun, body, n_val, n_test, say):
            "sigma": round(sigma, 4), "lr": round(lr, 4),
            "surrogate_before": sur0, "surrogate": sur, "surrogate_reward": sur_rew,
            "physics_val": pv, "physics_reward": prew, "physics_errors": pdet,
-           "improved": improved, "seconds": round(time.time() - t0, 1)}
+           "improved": improved, "level": run.level + 1, "n_val": n_val,
+           "seconds": round(time.time() - t0, 1)}
     np.save(run.cand_path, theta)
     if improved:
         run.brain.set_theta(run.task, theta)
         run.brain.save(run.task)
         np.save(run.dir / "best.npy", theta)
         st["best"] = {"round": r, "physics_val": pv, "physics_reward": prew,
-                      "surrogate": sur, "physics_errors": pdet, "time": _now()}
+                      "surrogate": sur, "physics_errors": pdet, "n": n_val, "time": _now()}
         st["stale"] = 0
         if n_test:
             pt, ptrew, ptdet = physics_eval(theta, run.task, n_test, test_seed(run.task))
@@ -239,7 +286,7 @@ def _update_flylab_history(run: SkillRun):
     sk["surrogate_success"] = b["surrogate"]
     sk["physics_val"] = b["physics_val"]
     sk["physics_test"] = (run.status.get("test") or {}).get("physics_test")
-    sk["mastered"] = run.mastered
+    sk["mastered"] = run.proficient
     run.brain.history["skills"][run.task] = sk
     _atomic_write(run.brain.h_path, json.dumps(run.brain.history, indent=2))
 
@@ -277,10 +324,10 @@ def write_skill_report(run: SkillRun):
              f"| rounds | {st['round']} |",
              f"| ES generations | {st['generations']} |",
              f"| physics runs | {st['physics_runs']} |",
-             f"| status | {'**mastered**' if run.mastered else 'training'} |"]
+             f"| status | {_status_text(st)} |"]
     if b:
-        lines += [f"| best brain | round {b['round']}: physics validation **{b['physics_val']:.0%}**, "
-                  f"surrogate {b['surrogate']:.0%} |"]
+        lines += [f"| best brain | round {b['round']}: physics validation **{b['physics_val']:.0%}** "
+                  f"on {b.get('n', 6)} arenas, surrogate {b['surrogate']:.0%} |"]
     if t:
         lines += [f"| held-out physics test | **{t['physics_test']:.0%}** on {t['n']} unseen arenas "
                   f"(errors: {t['physics_errors']}) |"]
@@ -289,15 +336,23 @@ def write_skill_report(run: SkillRun):
             "light_avoid": "mm gained away from source (> 6 = success)"}.get(
         run.task, "mm from target at the end (< 2 = success)")
     lines += ["", f"Physics error per arena: {unit}.", "",
-              "| round | gens | sigma | surrogate | physics val | val errors | test | note |",
-              "|---:|---:|---:|---:|---:|---|---:|---|"]
+              "| round | level | gens | sigma | surrogate | physics val | val errors | test | note |",
+              "|---:|---:|---:|---:|---:|---:|---|---:|---|"]
     for x in rows[-40:]:
         note = "new best" if x["improved"] else ("restart from best" if x.get("restarted_from_best") else
                                                  "reseed: fresh weights" if x.get("reseeded") else "")
         test = f"{x['physics_test']:.0%}" if "physics_test" in x else ""
-        lines.append(f"| {x['round']} | {x['generations']} | {x['sigma']:.3f} | {x['surrogate']:.0%} | "
+        lines.append(f"| {x['round']} | {x.get('level', 1)} | {x['generations']} | {x['sigma']:.3f} | {x['surrogate']:.0%} | "
                      f"{x['physics_val']:.0%} | {x['physics_errors']} | {test} | {note} |")
     _atomic_write(run.dir / "REPORT.md", "\n".join(lines) + "\n")
+
+
+def _status_text(st):
+    b, lvl = st.get("best") or {}, st.get("level", 0)
+    met = bool(b) and b.get("physics_val", 0) >= LEVELS[lvl][1] and b.get("surrogate", 0) >= MASTERED_SUR
+    if met and lvl == len(LEVELS) - 1:
+        return "**optimal**"
+    return f"level {lvl + 1}/{len(LEVELS)}" + (" (passed)" if met else "")
 
 
 def write_summary():
@@ -309,18 +364,20 @@ def write_summary():
             continue
         st = json.loads(p.read_text())
         b, t = st.get("best") or {}, st.get("test") or {}
-        mastered = bool(b and b.get("physics_val", 0) >= MASTERED_PHYS and b.get("surrogate", 0) >= MASTERED_SUR)
         rows.append(f"| [{T.PRETTY[task]}]({task}/REPORT.md) | {st['round']} | {st['generations']} | "
-                    f"{st['physics_runs']} | {b.get('surrogate', 0):.0%} | {b.get('physics_val', 0):.0%} | "
-                    f"{('%.0f%%' % (100 * t['physics_test'])) if t else '-'} | "
-                    f"{'mastered' if mastered else 'training'} |")
+                    f"{st['physics_runs']} | {b.get('surrogate', 0):.0%} | "
+                    f"{b.get('physics_val', 0):.0%} of {b.get('n', 6)} | "
+                    f"{('%.0f%% of %d' % (100 * t['physics_test'], t['n'])) if t else '-'} | "
+                    f"{_status_text(st)} |")
     text = "\n".join([
         "# FlyLab brains — continuous training log", "",
         f"*Auto-generated by `train_brains.py`, last updated {_now()}.*", "",
         "Every skill has its own brain and its own training process: surrogate ES "
         "rounds, physics validation in MuJoCo, keep-the-best selection, and a held-out "
         "physics test that is never used for selection. See each skill's report for "
-        "its full round-by-round history.", "",
+        "its full round-by-round history. Mastery is progressive: passing a level "
+        f"(100% physics validation, >=95% surrogate) doubles the validation and test "
+        f"arena sets; a brain is **optimal** once it holds up at level {len(LEVELS)}.", "",
         "| skill | rounds | ES generations | physics runs | surrogate | physics val | **physics test** | status |",
         "|---|---:|---:|---:|---:|---:|---:|---|", *rows, ""])
     _atomic_write(TRAIN_DIR / "TRAINING.md", text)
@@ -330,10 +387,10 @@ def write_summary():
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--skills", nargs="+", default=T.TASKS, choices=T.TASKS)
-    ap.add_argument("--hours", type=float, default=0, help="time budget (0 = until all mastered)")
+    ap.add_argument("--hours", type=float, default=0, help="time budget (0 = until all optimal)")
     ap.add_argument("--val", type=int, default=6, help="physics validation arenas per round")
     ap.add_argument("--test", type=int, default=8, help="held-out physics test arenas per new best")
-    ap.add_argument("--max-rounds", type=int, default=40, help="stop a skill after this many rounds")
+    ap.add_argument("--max-rounds", type=int, default=200, help="stop a skill after this many rounds")
     args = ap.parse_args()
 
     body = SG.Body()
@@ -344,14 +401,14 @@ def main():
     say(f"continuous training: {', '.join(args.skills)} | val {args.val} / test {args.test} arenas")
 
     while True:
-        active = [r for r in runs.values() if not r.mastered and r.status["round"] < args.max_rounds]
+        active = [r for r in runs.values() if not r.optimal and r.status["round"] < args.max_rounds]
         if not active:
-            say("every selected skill is mastered or has reached --max-rounds. Done.")
+            say("every selected skill is optimal or has reached --max-rounds. Done.")
             break
         if deadline and time.time() > deadline:
             say("time budget reached. Run again to continue where this left off.")
             break
-        run = min(active, key=lambda r: (r.best_key, r.status["round"]))   # weakest first
+        run = min(active, key=lambda r: (r.level, r.best_key, r.status["round"]))   # weakest first
         run_round(run, body, args.val, args.test, say)
 
 

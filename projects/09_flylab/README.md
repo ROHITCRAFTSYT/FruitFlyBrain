@@ -103,7 +103,8 @@ per-skill brains with continuous physics-validated training:
 ## Continuous training: every brain, its own process
 
 ```bash
-..\..\.venv-sim\Scripts\python train_brains.py                    # all 7 brains, until mastered
+..\..\.venv-sim\Scripts\python supervise.py                      # unattended: all 7 brains until optimal
+..\..\.venv-sim\Scripts\python train_brains.py                    # all 7 brains in one process
 ..\..\.venv-sim\Scripts\python train_brains.py --skills odor_seek   # just one
 ```
 
@@ -128,8 +129,21 @@ The loop always trains the **weakest** skill next, is fully **resumable**
 (stop it and run it again at any time), and writes everything down:
 `training/<skill>/log.jsonl` (every round), `training/<skill>/REPORT.md` +
 `curve.png` (per brain) and [`training/TRAINING.md`](training/TRAINING.md)
-(all brains). A skill counts as **mastered** at 100% physics validation and
-≥95% surrogate success; FlyLab then just performs it instead of retraining.
+(all brains).
+
+**Progressive mastery.** Passing a level (100% physics validation, ≥95%
+surrogate success) doubles the validation and held-out test sets
+(6/8 → 12/16 → 24/32 arenas). The champion is re-scored on the bigger sets
+and training continues. After level 1 FlyLab just performs the skill instead
+of retraining it. A brain counts as **optimal** once it scores ≥95% on 24
+validation arenas at level 3, so a lucky streak on a handful of arenas can't
+end its training.
+
+**Unattended loop.** `supervise.py` runs one trainer process per skill, two at
+a time on a 2-core CPU. Turns are round-robin (weakest skill first) in 1-hour
+slices so no stuck skill starves the others. It relaunches crashed workers,
+commits and pushes the reports every hour, and exits once every brain is
+optimal.
 
 ## Setup (separate environment; FlyGym pins its own versions)
 
