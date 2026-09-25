@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FlyLab Training Live</title>
+<meta name="description" content="Live dashboard of per-skill fruit-fly brains trained by Evolution Strategies and validated in NeuroMechFly v2 MuJoCo physics.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cellipse cx='16' cy='18' rx='6' ry='9' fill='%23a0662a'/%3E%3Cellipse cx='9' cy='12' rx='6' ry='3' fill='%2399c2ee' opacity='.8'/%3E%3Cellipse cx='23' cy='12' rx='6' ry='3' fill='%2399c2ee' opacity='.8'/%3E%3Ccircle cx='16' cy='8' r='3.5' fill='%23c0392b'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="wrap">
+  <p class="eyebrow">FlyLab · live training dashboard</p>
+  <h1>Teaching a simulated fruit fly seven skills</h1>
+  <p class="lede">
+    Each skill (walk, turn, go to a spot, follow or flee a smell, seek or hide from light) has its own small brain
+    driving a <strong>NeuroMechFly v2</strong> fly body. Brains are trained by Evolution Strategies in a fast calibrated
+    surrogate, then every round the best candidate is checked in full <strong>MuJoCo physics</strong> (FlyGym).
+    The headline number is the <strong>held-out physics test</strong>: arenas that are never used to pick a brain.
+  </p>
+  <div class="meta">
+    <span>Data last updated: <strong id="updated">loading...</strong></span>
+    <span class="dim" id="checked"></span>
+    <button id="refresh" type="button">Refresh now</button>
+  </div>
+  <div id="error" class="error" hidden></div>
+</header>
+
+<main class="wrap">
+  <section aria-labelledby="skills-h">
+    <h2 id="skills-h">Skills</h2>
+    <p class="note">
+      Mastery is progressive: level 1 = 6 validation / 8 test arenas, level 2 = 12 / 16, level 3 = 24 / 32.
+      A level passes at 100% / 100% / 95% physics validation and at least 95% in the surrogate.
+      <strong>Optimal</strong> means level 3 is passed. Validation arenas are used for selection; test arenas are not.
+    </p>
+    <div id="cards" class="cards"></div>
+  </section>
+
+  <section aria-labelledby="chart-h">
+    <h2 id="chart-h">Training curves</h2>
+    <div class="tabs" id="tabs" role="tablist" aria-label="Choose a skill"></div>
+    <div class="chart-box">
+      <div class="legend" id="legend"></div>
+      <div class="chart-wrap"><canvas id="chart" aria-label="Training curve for the selected skill" role="img"></canvas></div>
+      <p class="note" id="chart-note"></p>
+    </div>
+  </section>
+
+  <section aria-labelledby="events-h">
+    <h2 id="events-h">Event timeline</h2>
+    <div class="filters" id="event-filters"></div>
+    <ol id="events" class="events"></ol>
+    <button id="more-events" type="button" hidden>Show more</button>
+  </section>
+
+  <section aria-labelledby="eng-h">
+    <h2 id="eng-h">Engineering log: making skills survive the jump to physics</h2>
+    <div id="englog"><p class="dim">Loading README...</p></div>
+  </section>
+</main>
+
+<footer class="wrap">
+  <p>
+    Source: <a href="https://github.com/ROHITCRAFTSYT/FruitFlyBrain/tree/main/projects/09_flylab">ROHITCRAFTSYT/FruitFlyBrain</a>
+    · <a href="https://github.com/ROHITCRAFTSYT/FruitFlyBrain/blob/main/projects/09_flylab/training/TRAINING.md">training/TRAINING.md</a>
+    · <a href="https://github.com/ROHITCRAFTSYT/FruitFlyBrain/blob/main/projects/09_flylab/README.md">project README</a>
+  </p>
+  <p class="dim">The page reloads its data every 5 minutes; the training machine pushes new results about once an hour.</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

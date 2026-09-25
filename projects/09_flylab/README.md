@@ -1,5 +1,9 @@
 # Project 09 — FlyLab: teach a physics-simulated fruit fly 🪰🎮
 
+> **Watch it train:** the [live training dashboard](https://rohitcraftsyt.github.io/FruitFlyBrain/projects/09_flylab/dashboard/)
+> shows every brain's progress, held-out physics results and real MuJoCo footage, updated hourly
+> by the training supervisor. How realistic the simulation is: [REALISM_AUDIT.md](REALISM_AUDIT.md).
+
 Type what you want the fly to do in plain English (*"find the food"*, *"go to the
 light"*, *"turn left 90"*). The fly's brain **trains on that task**, then the
 trained brain is loaded into a **full physics model of a real fruit fly**, which
@@ -93,6 +97,7 @@ Every fix below came from watching the physics fly fail and measuring why:
 | Smell learning then **flat-lined at 2%** | "no goal" inputs looked like "arrived, stop"; a hard deadband made every candidate identical | explicit **"goal known"** input + a *ramped* gate that keeps a learning signal |
 | After a 9-lesson curriculum, **one shared brain scored 57%** in physics | skills that were excellent right after their lesson (walk: 0.5 mm stop, turn: 2°) drifted as later lessons reshaped the shared weights (walk 1/5, turn 0/5); rehearsal and a `sleep` consolidation step only partly helped | **one brain per skill** + **continuous training with physics in the loop** (below) |
 | Walk / go-to / smell brains **plateaued at ~70-80%** for 13-28 rounds; physics misses all landed at 1.5-2.6 mm (goal radius 2 mm) | surrogate: median stop 1.7 mm and the fly never halts, it circles with drives pinned at the limits (right 1.20, left -0.50). That's the body's tightest turning circle (~1.6 mm; the gait can't pivot). All 7 brains inherited saturated output weights (Σ\|W2\| ≈ 35 per motor) from the shared curriculum brain. A precision reward, a distance-scaled goal vector and shrinking W2 each left it at 1.7-1.8 mm; a **fresh** brain masters goto in 100 generations (100%, median stop 0.05-0.1 mm, with the original sensors and reward) and scored 5/6 in physics with misses mostly under 1 mm | **reseed** stuck lineages from fresh weights (step 6 below), keeping the old brain deployed until the new lineage beats it in physics |
+| Smell-seeking stayed at **~81% even after reseeds**; its 6-arena "best" then scored **25%** on the held-out test | fresh brains deliberately **circle the food** (drives pinned at left 1.15 / right -0.50, even with noise off): the ~1.6 mm turning circle fits inside the 2 mm goal zone, so orbiting earns almost full reward. Failed fixes, each measured and reverted: a steeper diffusion-like odor near-field (1.67 mm median) and dwell credited only when still (1.65 mm). A hand-written chemotaxis reflex using only the odor senses *does* stop on the source (median 0.47 mm), so the sense is adequate and the brains were trapped in a basin | reseeds of `odor_seek` start from an **innate reflex** behavior-cloned into the network (`reflexes.py`, like a fly's inborn chemotaxis); ES then refines it: surrogate **100%**, median stop 0.18 mm, 5/6 physics arenas with stops of ~0.4 mm |
 
 Physics-transfer success (random arenas in full MuJoCo, same evaluator
 throughout): **67%** (first version) → **86%** (domain randomization, fresh
