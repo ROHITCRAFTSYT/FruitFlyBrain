@@ -1,9 +1,9 @@
 {
   "task": "light_seek",
-  "round": 45,
-  "generations": 4500,
-  "physics_runs": 408,
-  "stale": 4,
+  "round": 68,
+  "generations": 6800,
+  "physics_runs": 546,
+  "stale": 3,
   "best": {
     "round": 20,
     "physics_val": 0.5,
@@ -39,7 +39,7 @@
   "started": "2026-09-24T23:54:37",
   "level": 0,
   "task_version": 2,
-  "reseed_round": 41,
+  "reseed_round": 65,
   "rule_changes": [
     {
       "after_round": 1,
