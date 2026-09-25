@@ -55,18 +55,18 @@
       "skill": "odor_seek",
       "file": "odor_seek.mp4",
       "poster": "odor_seek.png",
-      "brain_round": 55,
-      "level": 0,
+      "brain_round": 61,
+      "level": 1,
       "arena": "food 13.1 mm away, 53 deg to the left",
-      "success": false,
-      "final_error": 1.79,
+      "success": true,
+      "final_error": 0.24,
       "unit": "mm",
-      "outcome": "ended 1.79 mm from the food (pass: < 1.5 mm and standing still)",
+      "outcome": "ended 0.24 mm from the food (pass: < 1.5 mm and standing still)",
       "seed": 30003,
       "sim_seconds": 8.0,
       "video_seconds": 8.0,
       "playback_speed": 1.0,
-      "rendered_at": "2026-09-25T18:45:23"
+      "rendered_at": "2026-09-25T21:13:02"
     },
     {
       "skill": "odor_avoid",
@@ -106,18 +106,18 @@
       "skill": "light_avoid",
       "file": "light_avoid.mp4",
       "poster": "light_avoid.png",
-      "brain_round": 20,
+      "brain_round": 21,
       "level": 2,
       "arena": "lamp 6.2 mm away, 130 deg to the left",
       "success": true,
-      "final_error": 28.7,
+      "final_error": 24.2,
       "unit": "mm gained",
-      "outcome": "moved +28.7 mm further away (pass: > 6 mm, never approaching)",
+      "outcome": "moved +24.2 mm further away (pass: > 6 mm, never approaching)",
       "seed": 30006,
       "sim_seconds": 4.0,
       "video_seconds": 8.0,
       "playback_speed": 0.5,
-      "rendered_at": "2026-09-25T19:44:53"
+      "rendered_at": "2026-09-25T21:13:41"
     }
   ]
 }
