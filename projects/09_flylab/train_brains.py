@@ -200,6 +200,8 @@ def level_met(st):
 
 def is_optimal(st):
     t = st.get("test") or {}
+    if st.get("task_version", 1) != T.TASK_VERSION[st["task"]]:
+        return False                              # scored under outdated rules
     return (st.get("level", 0) == len(LEVELS) - 1 and level_met(st)
             and t.get("physics_test", 0) >= TEST_OPTIMAL)
 
