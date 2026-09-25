@@ -1,14 +1,14 @@
 {
   "task": "odor_seek",
-  "round": 51,
-  "generations": 5100,
-  "physics_runs": 362,
-  "stale": 4,
+  "round": 54,
+  "generations": 5400,
+  "physics_runs": 394,
+  "stale": 3,
   "best": {
     "round": 46,
-    "physics_val": 0.8333333333333334,
-    "physics_reward": 1.6868401275065714,
-    "surrogate": 0.8125,
+    "physics_val": 0.0,
+    "physics_reward": 1.110849680698345,
+    "surrogate": 0.0,
     "physics_errors": [
       1.32,
       1.7,
@@ -22,8 +22,8 @@
   },
   "test": {
     "round": 46,
-    "physics_test": 0.25,
-    "physics_reward": 1.5671480413833878,
+    "physics_test": 0.0,
+    "physics_reward": 1.0937322974669585,
     "physics_errors": [
       2.74,
       3.31,
@@ -37,5 +37,14 @@
     "n": 8
   },
   "started": "2026-09-24T23:54:36",
-  "reseed_round": 47
+  "reseed_round": 51,
+  "task_version": 2,
+  "level": 0,
+  "rule_changes": [
+    {
+      "after_round": 51,
+      "version": 2,
+      "time": "2026-09-25T16:22:04"
+    }
+  ]
 }

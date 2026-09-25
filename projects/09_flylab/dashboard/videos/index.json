@@ -7,15 +7,15 @@
       "brain_round": 25,
       "level": 2,
       "arena": "goal flag 11.2 mm away, ahead",
-      "success": true,
+      "success": false,
       "final_error": 0.42,
       "unit": "mm",
-      "outcome": "ended 0.42 mm from the goal flag (pass: < 2 mm)",
+      "outcome": "ended 0.42 mm from the goal flag (pass: < 1.5 mm and standing still)",
       "seed": 30000,
       "sim_seconds": 5.0,
       "video_seconds": 5.0,
       "playback_speed": 1.0,
-      "rendered_at": "2026-09-25T11:47:01"
+      "rendered_at": "2026-09-25T16:21:00"
     },
     {
       "skill": "turn",
@@ -32,24 +32,24 @@
       "sim_seconds": 3.0,
       "video_seconds": 6.0,
       "playback_speed": 0.5,
-      "rendered_at": "2026-09-25T11:44:39"
+      "rendered_at": "2026-09-25T16:21:27"
     },
     {
       "skill": "goto",
       "file": "goto.mp4",
       "poster": "goto.png",
-      "brain_round": 29,
+      "brain_round": 30,
       "level": 1,
       "arena": "goal flag 15.9 mm away, 26 deg to the left",
       "success": true,
-      "final_error": 1.88,
+      "final_error": 0.64,
       "unit": "mm",
-      "outcome": "ended 1.88 mm from the goal flag (pass: < 2 mm)",
+      "outcome": "ended 0.64 mm from the goal flag (pass: < 1.5 mm and standing still)",
       "seed": 30002,
       "sim_seconds": 7.0,
       "video_seconds": 7.0,
       "playback_speed": 1.0,
-      "rendered_at": "2026-09-25T11:49:12"
+      "rendered_at": "2026-09-25T16:22:47"
     },
     {
       "skill": "odor_seek",
@@ -61,12 +61,12 @@
       "success": false,
       "final_error": 2.51,
       "unit": "mm",
-      "outcome": "ended 2.51 mm from the food (pass: < 2 mm)",
+      "outcome": "ended 2.51 mm from the food (pass: < 1.5 mm and standing still)",
       "seed": 30003,
       "sim_seconds": 8.0,
       "video_seconds": 8.0,
       "playback_speed": 1.0,
-      "rendered_at": "2026-09-25T11:52:38"
+      "rendered_at": "2026-09-25T16:24:21"
     },
     {
       "skill": "odor_avoid",
@@ -75,32 +75,32 @@
       "brain_round": 42,
       "level": 2,
       "arena": "repellent 4.5 mm away, 33 deg to the left",
-      "success": true,
+      "success": false,
       "final_error": 28.5,
       "unit": "mm gained",
-      "outcome": "moved +28.5 mm further away (pass: > 6 mm)",
+      "outcome": "moved +28.5 mm further away (pass: > 6 mm, never approaching)",
       "seed": 30004,
       "sim_seconds": 4.0,
       "video_seconds": 8.0,
       "playback_speed": 0.5,
-      "rendered_at": "2026-09-25T11:54:40"
+      "rendered_at": "2026-09-25T16:25:01"
     },
     {
       "skill": "light_seek",
       "file": "light_seek.mp4",
       "poster": "light_seek.png",
       "brain_round": 1,
-      "level": 0,
+      "level": 2,
       "arena": "lamp 15.8 mm away, 38 deg to the left",
-      "success": true,
+      "success": false,
       "final_error": 0.32,
       "unit": "mm",
-      "outcome": "ended 0.32 mm from the lamp (pass: < 2 mm)",
+      "outcome": "ended 0.32 mm from the lamp (pass: < 1.5 mm and standing still)",
       "seed": 30005,
       "sim_seconds": 7.0,
       "video_seconds": 7.0,
       "playback_speed": 1.0,
-      "rendered_at": "2026-09-25T11:57:53"
+      "rendered_at": "2026-09-25T16:26:09"
     },
     {
       "skill": "light_avoid",
@@ -112,12 +112,12 @@
       "success": true,
       "final_error": 61.0,
       "unit": "mm gained",
-      "outcome": "moved +61.0 mm further away (pass: > 6 mm)",
+      "outcome": "moved +61.0 mm further away (pass: > 6 mm, never approaching)",
       "seed": 30006,
       "sim_seconds": 4.0,
       "video_seconds": 8.0,
       "playback_speed": 0.5,
-      "rendered_at": "2026-09-25T11:59:32"
+      "rendered_at": "2026-09-25T16:27:20"
     }
   ]
 }
