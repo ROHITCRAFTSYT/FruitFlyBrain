@@ -1,37 +1,37 @@
 {
   "task": "light_avoid",
-  "round": 2,
-  "generations": 200,
-  "physics_runs": 28,
+  "round": 3,
+  "generations": 300,
+  "physics_runs": 42,
   "stale": 0,
   "best": {
-    "round": 2,
-    "physics_val": 0.8333333333333334,
-    "physics_reward": 1.1145538605248202,
+    "round": 3,
+    "physics_val": 1.0,
+    "physics_reward": 1.460018314569912,
     "surrogate": 1.0,
     "physics_errors": [
-      -6.5,
-      63.7,
+      15.6,
+      63.8,
       63.5,
-      31.7,
-      63.0,
-      15.4
+      10.1,
+      63.1,
+      29.7
     ],
-    "time": "2026-09-25T00:52:17"
+    "time": "2026-09-25T07:36:02"
   },
   "test": {
-    "round": 2,
-    "physics_test": 0.625,
-    "physics_reward": 0.715421788081414,
+    "round": 3,
+    "physics_test": 1.0,
+    "physics_reward": 1.5,
     "physics_errors": [
-      -3.4,
+      37.0,
       63.6,
-      63.5,
-      64.1,
-      64.1,
-      31.3,
-      -5.8,
-      -5.0
+      63.6,
+      64.2,
+      64.2,
+      29.6,
+      19.5,
+      32.0
     ],
     "n": 8
   },
