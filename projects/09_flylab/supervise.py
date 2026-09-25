@@ -11,6 +11,7 @@ every --push-every hours. It stops by itself once every skill is optimal
 
     ..\\..\\.venv-sim\\Scripts\\python supervise.py              # 2 workers, 1 h slices
     ..\\..\\.venv-sim\\Scripts\\python supervise.py --workers 1  # one core only
+    ..\\..\\.venv-sim\\Scripts\\python supervise.py --keep-awake # don't let Windows sleep meanwhile
 
 Everything it does is appended to training/logs/supervisor.log; each skill's
 trainer output goes to training/logs/<skill>.log.
@@ -18,10 +19,13 @@ trainer output goes to training/logs/<skill>.log.
 from __future__ import annotations
 
 import argparse
+import ctypes
 import json
+import signal
 import subprocess
 import sys
 import time
+import traceback
 from datetime import datetime
 from pathlib import Path
 
@@ -34,6 +38,9 @@ from train_brains import LEVELS, MASTERED_SUR, TRAIN_DIR, write_summary
 LOGS = TRAIN_DIR / "logs"
 REPO = HERE.parent.parent
 MAX_CRASHES = 3              # consecutive crashes before a skill is set aside
+# Workers get their own process group and no console, so a Ctrl+C (or a console
+# closing) elsewhere can't take the whole training run down with it.
+DETACH = (subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW) if sys.platform == "win32" else 0
 TRAILER = "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 
@@ -93,7 +100,12 @@ def main():
     ap.add_argument("--test", type=int, default=8)
     ap.add_argument("--max-rounds", type=int, default=200)
     ap.add_argument("--push-every", type=float, default=1.0, help="hours between git commits (0 = never)")
+    ap.add_argument("--keep-awake", action="store_true", help="ask Windows not to sleep while training runs")
     args = ap.parse_args()
+
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+    if args.keep_awake and sys.platform == "win32":
+        ctypes.windll.kernel32.SetThreadExecutionState(0x80000000 | 0x00000001)  # CONTINUOUS | SYSTEM_REQUIRED
 
     say(f"supervisor started: {args.workers} workers, {args.slice} h slices")
     running: dict[str, subprocess.Popen] = {}
@@ -124,7 +136,7 @@ def main():
             running[task] = subprocess.Popen(
                 [sys.executable, "-u", "train_brains.py", "--skills", task, "--hours", str(args.slice),
                  "--val", str(args.val), "--test", str(args.test), "--max-rounds", str(args.max_rounds)],
-                cwd=HERE, stdout=log, stderr=subprocess.STDOUT)
+                cwd=HERE, stdout=log, stderr=subprocess.STDOUT, creationflags=DETACH)
             turns[task] += 1
             say(f"[{task}] trainer started (pid {running[task].pid}), level "
                 f"{status(task).get('level', 0) + 1}/{len(LEVELS)}")
@@ -136,4 +148,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception:
+        say("supervisor crashed:\n" + traceback.format_exc())
+        raise

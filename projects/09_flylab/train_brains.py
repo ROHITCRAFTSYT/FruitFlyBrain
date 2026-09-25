@@ -17,7 +17,8 @@ Each skill has its OWN brain and its OWN training process. A round is:
   6. RESEED               a lineage that still hasn't mastered even the surrogate
                           after PLATEAU rounds is stuck in a local optimum (fresh
                           brains master it in 1-2 rounds): the working copy starts
-                          over from fresh random weights, with double patience.
+                          over from fresh weights (random, or a cloned innate
+                          reflex -- see reflexes.py), with double patience.
                           The deployed brain stays until the new lineage beats it.
   7. PROGRESSIVE LEVELS   mastering a level (100% physics validation, >=95%
                           surrogate) raises the bar: the validation and test
@@ -65,6 +66,7 @@ except Exception:
 
 import brain as B
 import physics
+import reflexes as RX
 import surrogate as SG
 import tasks as T
 import trainer as TR
@@ -256,7 +258,7 @@ def run_round(run: SkillRun, body, n_val, n_test, say):
         fresh = st.get("reseed_round", 0) > st["best"]["round"] if st["best"] else False
         if len(lineage) >= PLATEAU and max(lineage) < MASTERED_SUR:
             rng = np.random.default_rng(T.TASKS.index(run.task) * 100_000 + 50_000 + r)
-            np.save(run.cand_path, B.init_theta(rng))                # reseed a fresh lineage
+            np.save(run.cand_path, RX.seed_theta(run.task, body, rng))   # reseed a fresh lineage
             st["reseed_round"] = r
             st["stale"] = 0
             row["reseeded"] = True

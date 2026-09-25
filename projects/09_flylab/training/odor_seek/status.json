@@ -3,7 +3,7 @@
   "round": 47,
   "generations": 4700,
   "physics_runs": 338,
-  "stale": 1,
+  "stale": 0,
   "best": {
     "round": 46,
     "physics_val": 0.8333333333333334,
@@ -37,5 +37,5 @@
     "n": 8
   },
   "started": "2026-09-24T23:54:36",
-  "reseed_round": 45
+  "reseed_round": 47
 }
