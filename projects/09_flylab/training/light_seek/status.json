@@ -1,0 +1,39 @@
+{
+  "task": "light_seek",
+  "round": 1,
+  "generations": 100,
+  "physics_runs": 14,
+  "stale": 0,
+  "best": {
+    "round": 1,
+    "physics_val": 1.0,
+    "physics_reward": 2.28163420897508,
+    "surrogate": 1.0,
+    "physics_errors": [
+      0.53,
+      0.08,
+      0.13,
+      0.17,
+      0.21,
+      0.12
+    ],
+    "time": "2026-09-25T00:05:58"
+  },
+  "test": {
+    "round": 1,
+    "physics_test": 1.0,
+    "physics_reward": 2.2810251446402434,
+    "physics_errors": [
+      0.1,
+      0.55,
+      0.13,
+      0.41,
+      0.12,
+      0.14,
+      0.19,
+      0.13
+    ],
+    "n": 8
+  },
+  "started": "2026-09-24T23:54:37"
+}

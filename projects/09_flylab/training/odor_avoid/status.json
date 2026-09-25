@@ -1,0 +1,39 @@
+{
+  "task": "odor_avoid",
+  "round": 40,
+  "generations": 4000,
+  "physics_runs": 264,
+  "stale": 1,
+  "best": {
+    "round": 39,
+    "physics_val": 0.6666666666666666,
+    "physics_reward": 1.0998078497711956,
+    "surrogate": 0.8958333333333334,
+    "physics_errors": [
+      8.7,
+      13.9,
+      13.0,
+      13.8,
+      4.4,
+      3.7
+    ],
+    "time": "2026-09-25T01:25:46"
+  },
+  "test": {
+    "round": 39,
+    "physics_test": 0.875,
+    "physics_reward": 1.1175505856821106,
+    "physics_errors": [
+      6.4,
+      11.5,
+      7.2,
+      12.9,
+      7.7,
+      11.6,
+      4.7,
+      10.4
+    ],
+    "n": 8
+  },
+  "started": "2026-09-24T23:54:37"
+}

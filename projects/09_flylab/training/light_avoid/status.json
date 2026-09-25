@@ -1,0 +1,39 @@
+{
+  "task": "light_avoid",
+  "round": 2,
+  "generations": 200,
+  "physics_runs": 28,
+  "stale": 0,
+  "best": {
+    "round": 2,
+    "physics_val": 0.8333333333333334,
+    "physics_reward": 1.1145538605248202,
+    "surrogate": 1.0,
+    "physics_errors": [
+      -6.5,
+      63.7,
+      63.5,
+      31.7,
+      63.0,
+      15.4
+    ],
+    "time": "2026-09-25T00:52:17"
+  },
+  "test": {
+    "round": 2,
+    "physics_test": 0.625,
+    "physics_reward": 0.715421788081414,
+    "physics_errors": [
+      -3.4,
+      63.6,
+      63.5,
+      64.1,
+      64.1,
+      31.3,
+      -5.8,
+      -5.0
+    ],
+    "n": 8
+  },
+  "started": "2026-09-24T23:54:36"
+}

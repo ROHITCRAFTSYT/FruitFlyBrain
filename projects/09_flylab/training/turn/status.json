@@ -1,0 +1,39 @@
+{
+  "task": "turn",
+  "round": 1,
+  "generations": 100,
+  "physics_runs": 14,
+  "stale": 0,
+  "best": {
+    "round": 1,
+    "physics_val": 0.8333333333333334,
+    "physics_reward": 0.4431116301261981,
+    "surrogate": 0.9791666666666666,
+    "physics_errors": [
+      9.0,
+      10.3,
+      9.9,
+      3.6,
+      4.8,
+      1.4
+    ],
+    "time": "2026-09-25T00:13:15"
+  },
+  "test": {
+    "round": 1,
+    "physics_test": 0.75,
+    "physics_reward": 0.4702518180479967,
+    "physics_errors": [
+      0.5,
+      5.2,
+      8.0,
+      4.6,
+      0.9,
+      1.4,
+      1.0,
+      2.2
+    ],
+    "n": 8
+  },
+  "started": "2026-09-24T23:54:36"
+}

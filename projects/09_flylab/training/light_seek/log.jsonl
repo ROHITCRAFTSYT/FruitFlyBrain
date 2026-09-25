@@ -1,0 +1,1 @@
+{"round": 1, "time": "2026-09-25T00:05:57", "generations": 100, "sigma": 0.024, "lr": 0.009, "surrogate_before": 1.0, "surrogate": 1.0, "surrogate_reward": 2.2896165431405193, "physics_val": 1.0, "physics_reward": 2.28163420897508, "physics_errors": [0.53, 0.08, 0.13, 0.17, 0.21, 0.12], "improved": true, "seconds": 176.0, "physics_test": 1.0}

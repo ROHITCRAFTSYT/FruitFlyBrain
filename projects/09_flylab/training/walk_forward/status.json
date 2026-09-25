@@ -1,0 +1,39 @@
+{
+  "task": "walk_forward",
+  "round": 13,
+  "generations": 1300,
+  "physics_runs": 126,
+  "stale": 1,
+  "best": {
+    "round": 12,
+    "physics_val": 0.6666666666666666,
+    "physics_reward": 1.6998390449715275,
+    "surrogate": 0.75,
+    "physics_errors": [
+      2.82,
+      1.02,
+      1.22,
+      2.59,
+      1.23,
+      1.68
+    ],
+    "time": "2026-09-25T01:46:58"
+  },
+  "test": {
+    "round": 12,
+    "physics_test": 0.5,
+    "physics_reward": 1.611119851474748,
+    "physics_errors": [
+      2.56,
+      1.34,
+      1.29,
+      2.27,
+      2.29,
+      0.83,
+      2.06,
+      1.48
+    ],
+    "n": 8
+  },
+  "started": "2026-09-24T23:54:36"
+}
