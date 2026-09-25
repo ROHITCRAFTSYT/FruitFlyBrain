@@ -28,6 +28,7 @@ DR_VEER = 0.25                # rad/s constant veer while walking (std)
 # without accumulating into its path.
 DR_JITTER_MM = 0.15
 DR_YAW_WOBBLE = np.deg2rad(4.0)
+STRIDE_DRIVE = 0.6            # |drive| of the "full stride" the wobble was measured at
 CALIB_PATH = Path(__file__).resolve().parent / "state" / "calibration.npz"
 
 
@@ -126,13 +127,15 @@ def _run(body, theta, x0, y0, th0, stim, cue_s, steps, rng, noise):
         jitter = 0.0
     # Common random numbers: every noise draw has shape (1, S) and is shared by
     # all P brains, so fitness differences come from the brains, not the dice.
-    speed_prev = np.zeros((P, S))
+    # Gait sway is part of the body, not domain randomization: it is always in
+    # the recorded thorax path (a fixed seed keeps noise-free rollouts
+    # repeatable), so "standing still" means the legs actually stopped.
+    sway_rng = rng if rng is not None else np.random.default_rng(0)
+    sway_x = np.zeros((P, S)); sway_y = np.zeros((P, S)); wob = np.zeros((P, S))
     for t in range(steps):
         if jitter:
-            wob = np.clip(speed_prev / 10.0, 0, 1.3)          # wobble scales with stride
-            feats, prev = sense(x + wob * rng.normal(0, jitter, (1, S)),
-                                y + wob * rng.normal(0, jitter, (1, S)),
-                                th + wob * rng.normal(0, DR_YAW_WOBBLE, (1, S)), stim, prev)
+            feats, prev = sense(x + sway_x, y + sway_y,
+                                th + wob * sway_rng.normal(0, DR_YAW_WOBBLE, (1, S)), stim, prev)
         else:
             feats, prev = sense(x, y, th, stim, prev)
         if rng is not None and noise > 0:
@@ -148,7 +151,12 @@ def _run(body, theta, x0, y0, th0, stim, cue_s, steps, rng, noise):
         c, s = np.cos(th), np.sin(th)
         x = x + (v * c - u * s) * DT
         y = y + (v * s + u * c) * DT
-        speed_prev = np.abs(v)
         th = th + w * DT
-        xs[..., t + 1], ys[..., t + 1], ths[..., t + 1] = x, y, th
+        # Sway follows how hard the legs are stepping, not net speed: stepping
+        # in place (one side backward) goes nowhere but rocks the thorax at
+        # ~2 mm/s in physics, the same as 0.4 x a full stride's wobble.
+        wob = np.clip(np.abs(d_eff).mean(axis=-1) / STRIDE_DRIVE, 0, 1.3)
+        sway_x = wob * sway_rng.normal(0, DR_JITTER_MM, (1, S))
+        sway_y = wob * sway_rng.normal(0, DR_JITTER_MM, (1, S))
+        xs[..., t + 1], ys[..., t + 1], ths[..., t + 1] = x + sway_x, y + sway_y, th
     return xs, ys, ths, drives

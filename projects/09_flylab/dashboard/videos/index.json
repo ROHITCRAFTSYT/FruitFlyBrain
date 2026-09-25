@@ -72,18 +72,18 @@
       "skill": "odor_avoid",
       "file": "odor_avoid.mp4",
       "poster": "odor_avoid.png",
-      "brain_round": 42,
-      "level": 2,
+      "brain_round": 48,
+      "level": 0,
       "arena": "repellent 4.5 mm away, 33 deg to the left",
-      "success": false,
-      "final_error": 28.5,
+      "success": true,
+      "final_error": 21.6,
       "unit": "mm gained",
-      "outcome": "moved +28.5 mm further away (pass: > 6 mm, never approaching)",
+      "outcome": "moved +21.6 mm further away (pass: > 6 mm, never approaching)",
       "seed": 30004,
       "sim_seconds": 4.0,
       "video_seconds": 8.0,
       "playback_speed": 0.5,
-      "rendered_at": "2026-09-25T16:25:01"
+      "rendered_at": "2026-09-25T19:44:01"
     },
     {
       "skill": "light_seek",
@@ -106,18 +106,18 @@
       "skill": "light_avoid",
       "file": "light_avoid.mp4",
       "poster": "light_avoid.png",
-      "brain_round": 10,
+      "brain_round": 20,
       "level": 2,
       "arena": "lamp 6.2 mm away, 130 deg to the left",
       "success": true,
-      "final_error": 61.0,
+      "final_error": 28.7,
       "unit": "mm gained",
-      "outcome": "moved +61.0 mm further away (pass: > 6 mm, never approaching)",
+      "outcome": "moved +28.7 mm further away (pass: > 6 mm, never approaching)",
       "seed": 30006,
       "sim_seconds": 4.0,
       "video_seconds": 8.0,
       "playback_speed": 0.5,
-      "rendered_at": "2026-09-25T16:27:20"
+      "rendered_at": "2026-09-25T19:44:53"
     }
   ]
 }
