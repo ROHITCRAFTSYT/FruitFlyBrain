@@ -14,6 +14,11 @@ Each skill has its OWN brain and its OWN training process. A round is:
                           are NEVER used for selection -> honest reported numbers
   5. PATIENCE             after several rounds without improvement the working
                           copy restarts from the best checkpoint
+  6. RESEED               a lineage that still hasn't mastered even the surrogate
+                          after PLATEAU rounds is stuck in a local optimum (fresh
+                          brains master it in 1-2 rounds): the working copy starts
+                          over from fresh random weights, with double patience.
+                          The deployed brain stays until the new lineage beats it.
 
 The loop always works on the weakest skill next, keeps going until every skill
 is mastered (or the time budget runs out), and is fully resumable: stop it any
@@ -63,6 +68,7 @@ TRAIN_DIR = HERE / "training"
 STATE = HERE / "state"
 ROUND_GENS = 100
 PATIENCE = 4                 # rounds without a new best -> restart from best
+PLATEAU = 8                  # rounds a lineage gets to master the surrogate before a reseed
 SUR_EVAL_N = 96
 MASTERED_PHYS = 1.0          # validation success needed to count as mastered
 MASTERED_SUR = 0.95
@@ -199,7 +205,15 @@ def run_round(run: SkillRun, body, n_val, n_test, say):
             row["physics_test"] = pt
     else:
         st["stale"] += 1
-        if st["stale"] >= PATIENCE and (run.dir / "best.npy").exists():
+        lineage = [x["surrogate"] for x in run.rows() if x["round"] > st.get("reseed_round", 0)] + [sur]
+        fresh = st.get("reseed_round", 0) > st["best"]["round"] if st["best"] else False
+        if len(lineage) >= PLATEAU and max(lineage) < MASTERED_SUR:
+            rng = np.random.default_rng(T.TASKS.index(run.task) * 100_000 + 50_000 + r)
+            np.save(run.cand_path, B.init_theta(rng))                # reseed a fresh lineage
+            st["reseed_round"] = r
+            st["stale"] = 0
+            row["reseeded"] = True
+        elif st["stale"] >= PATIENCE * (2 if fresh else 1) and (run.dir / "best.npy").exists():
             np.save(run.cand_path, np.load(run.dir / "best.npy"))   # restart from best
             st["stale"] = 0
             row["restarted_from_best"] = True
@@ -278,7 +292,8 @@ def write_skill_report(run: SkillRun):
               "| round | gens | sigma | surrogate | physics val | val errors | test | note |",
               "|---:|---:|---:|---:|---:|---|---:|---|"]
     for x in rows[-40:]:
-        note = "new best" if x["improved"] else ("restart from best" if x.get("restarted_from_best") else "")
+        note = "new best" if x["improved"] else ("restart from best" if x.get("restarted_from_best") else
+                                                 "reseed: fresh weights" if x.get("reseeded") else "")
         test = f"{x['physics_test']:.0%}" if "physics_test" in x else ""
         lines.append(f"| {x['round']} | {x['generations']} | {x['sigma']:.3f} | {x['surrogate']:.0%} | "
                      f"{x['physics_val']:.0%} | {x['physics_errors']} | {test} | {note} |")

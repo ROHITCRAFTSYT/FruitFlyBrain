@@ -92,6 +92,7 @@ Every fix below came from watching the physics fly fail and measuring why:
 | Fly reached the goal, then **crept 3.6 mm away** | measured: a 0.10 "stop" command still creeps 0.77 mm/s; exact 0 stops dead | **motor gate** (tiny drives → exact halt) + a finer calibration grid near zero |
 | Smell learning then **flat-lined at 2%** | "no goal" inputs looked like "arrived, stop"; a hard deadband made every candidate identical | explicit **"goal known"** input + a *ramped* gate that keeps a learning signal |
 | After a 9-lesson curriculum, **one shared brain scored 57%** in physics | skills that were excellent right after their lesson (walk: 0.5 mm stop, turn: 2°) drifted as later lessons reshaped the shared weights (walk 1/5, turn 0/5); rehearsal and a `sleep` consolidation step only partly helped | **one brain per skill** + **continuous training with physics in the loop** (below) |
+| Walk / go-to / smell brains **plateaued at ~70-80%** for 13-28 rounds; physics misses all landed at 1.5-2.6 mm (goal radius 2 mm) | surrogate: median stop 1.7 mm and the fly never halts, it circles with drives pinned at the limits (right 1.20, left -0.50). That's the body's tightest turning circle (~1.6 mm; the gait can't pivot). All 7 brains inherited saturated output weights (Σ\|W2\| ≈ 35 per motor) from the shared curriculum brain. A precision reward, a distance-scaled goal vector and shrinking W2 each left it at 1.7-1.8 mm; a **fresh** brain masters goto in 100 generations (100%, median stop 0.05-0.1 mm, with the original sensors and reward) and scored 5/6 in physics with misses mostly under 1 mm | **reseed** stuck lineages from fresh weights (step 6 below), keeping the old brain deployed until the new lineage beats it in physics |
 
 Physics-transfer success (random arenas in full MuJoCo, same evaluator
 throughout): **67%** (first version) → **86%** (domain randomization, fresh
@@ -118,6 +119,10 @@ Each skill brain loops through **rounds**:
    are **never used for selection**. These are the honest headline numbers.
 5. **Patience:** 4 rounds without improvement and the working copy restarts from
    the best checkpoint.
+6. **Reseed:** a lineage that still hasn't mastered even the surrogate after 8
+   rounds is stuck in a local optimum, so the working copy starts over from fresh
+   random weights (with double patience). The deployed brain stays in place
+   until the new lineage beats it in physics.
 
 The loop always trains the **weakest** skill next, is fully **resumable**
 (stop it and run it again at any time), and writes everything down:
