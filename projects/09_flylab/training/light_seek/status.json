@@ -1,45 +1,45 @@
 {
   "task": "light_seek",
-  "round": 8,
-  "generations": 800,
-  "physics_runs": 170,
-  "stale": 2,
+  "round": 25,
+  "generations": 2500,
+  "physics_runs": 288,
+  "stale": 0,
   "best": {
-    "round": 6,
-    "physics_val": 0.16666666666666666,
-    "physics_reward": 1.5910949341055918,
-    "surrogate": 0.3125,
+    "round": 20,
+    "physics_val": 0.5,
+    "physics_reward": 1.709458368512818,
+    "surrogate": 0.5833333333333334,
     "physics_errors": [
-      0.15,
-      0.17,
-      0.13,
-      0.13,
-      0.02,
-      0.31
+      0.12,
+      0.29,
+      0.18,
+      0.12,
+      0.01,
+      0.34
     ],
     "n": 6,
-    "time": "2026-09-25T22:00:36"
+    "time": "2026-09-25T22:50:43"
   },
   "test": {
-    "round": 6,
-    "physics_test": 0.0,
-    "physics_reward": 1.5787693601099622,
+    "round": 20,
+    "physics_test": 0.375,
+    "physics_reward": 1.7005573432551426,
     "physics_errors": [
-      0.26,
-      0.29,
-      0.06,
-      0.08,
-      0.39,
+      0.04,
+      0.38,
       0.09,
-      0.08,
-      0.04
+      0.24,
+      0.19,
+      0.45,
+      0.21,
+      0.12
     ],
     "n": 8
   },
   "started": "2026-09-24T23:54:37",
   "level": 0,
   "task_version": 2,
-  "reseed_round": 1,
+  "reseed_round": 25,
   "rule_changes": [
     {
       "after_round": 1,
