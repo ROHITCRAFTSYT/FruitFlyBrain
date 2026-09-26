@@ -29,8 +29,10 @@ TURN_MAX_DISP_MM = 6.0   # a "turn" must not wander off (the gait can't pivot pe
 STEP_S = 0.05            # trajectories are sampled at the 20 Hz brain rate
 # Bumped whenever a task's definition of success changes; the trainer then
 # re-scores the deployed brain under the new rules before training on.
+# Light v3: the lamp moved overhead (world.LIGHT_HEIGHT_MM), so scores taken
+# with the old eye-level point light no longer describe the brain.
 TASK_VERSION = {"walk_forward": 2, "turn": 1, "goto": 2, "odor_seek": 2,
-                "odor_avoid": 2, "light_seek": 2, "light_avoid": 2}
+                "odor_avoid": 2, "light_seek": 3, "light_avoid": 3}
 
 TASKS = ["walk_forward", "turn", "goto", "odor_seek", "odor_avoid",
          "light_seek", "light_avoid"]
