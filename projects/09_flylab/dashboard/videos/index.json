@@ -89,18 +89,18 @@
       "skill": "light_seek",
       "file": "light_seek.mp4",
       "poster": "light_seek.png",
-      "brain_round": 102,
+      "brain_round": 190,
       "level": 0,
       "arena": "lamp 15.8 mm away, 38 deg to the left",
-      "success": true,
-      "final_error": 0.18,
+      "success": false,
+      "final_error": 0.14,
       "unit": "mm",
-      "outcome": "ended 0.18 mm from the lamp (pass: < 1.5 mm and standing still)",
+      "outcome": "ended 0.14 mm from the lamp (pass: < 1.5 mm and standing still)",
       "seed": 30005,
       "sim_seconds": 7.0,
       "video_seconds": 7.0,
       "playback_speed": 1.0,
-      "rendered_at": "2026-09-26T03:13:23"
+      "rendered_at": "2026-09-26T06:16:05"
     },
     {
       "skill": "light_avoid",

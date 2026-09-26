@@ -449,7 +449,7 @@ def main():
     ap.add_argument("--hours", type=float, default=0, help="time budget (0 = until all optimal)")
     ap.add_argument("--val", type=int, default=6, help="physics validation arenas per round")
     ap.add_argument("--test", type=int, default=8, help="held-out physics test arenas per new best")
-    ap.add_argument("--max-rounds", type=int, default=200, help="stop a skill after this many rounds")
+    ap.add_argument("--max-rounds", type=int, default=400, help="stop a skill after this many rounds")
     args = ap.parse_args()
 
     body = SG.Body()

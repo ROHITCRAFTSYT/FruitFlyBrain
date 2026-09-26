@@ -34,7 +34,19 @@ def odor_taxis(feats):
     return np.clip(d, -0.5, 1.2) * (dist > 0.5)[..., None]
 
 
-REFLEXES = {"odor_seek": odor_taxis}
+def odor_escape(feats):
+    """Creep forward steering away from the stronger side; if the smell gets
+    stronger anyway, the source is ahead, so walk straight backward (like the
+    'moonwalker' descending neurons that make real flies back away). With a
+    source dead ahead or behind, both antennae read the same, and only moving
+    tells the two apart, so the first move is a slow, cheap probe."""
+    turn = np.clip(3.0 * feats[..., 1], -0.6, 0.6)
+    d = np.stack([0.3 + turn, 0.3 - turn], axis=-1)
+    back = (feats[..., 2] > 0.1)[..., None]
+    return np.clip(np.where(back, -0.5, d), -0.5, 1.2)
+
+
+REFLEXES = {"odor_seek": odor_taxis, "odor_avoid": odor_escape}
 
 
 def _gate(d):

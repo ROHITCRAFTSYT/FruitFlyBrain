@@ -106,7 +106,7 @@ def main():
     ap.add_argument("--slice", type=float, default=1.0, help="hours per training turn before yielding")
     ap.add_argument("--val", type=int, default=6)
     ap.add_argument("--test", type=int, default=8)
-    ap.add_argument("--max-rounds", type=int, default=200)
+    ap.add_argument("--max-rounds", type=int, default=400)
     ap.add_argument("--push-every", type=float, default=1.0, help="hours between git commits (0 = never)")
     ap.add_argument("--keep-awake", action="store_true", help="ask Windows not to sleep while training runs")
     args = ap.parse_args()

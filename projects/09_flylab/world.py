@@ -21,6 +21,7 @@ EYE_AXIS = np.deg2rad(30.0)  # each compound eye's preferred direction, +/- from
 
 ODOR_DECAY_MM = 10.0         # odor intensity ~ exp(-r / 10 mm)
 LIGHT_SCALE_MM = 30.0        # light intensity ~ 1 / (1 + (r/30)^2)
+LIGHT_HEIGHT_MM = 1.0        # the lamp hangs this far above the fly's eyes
 REACH_RADIUS_MM = 1.5        # "arrived" if the thorax is within this of a target
 SENSE_BETA = 0.4             # leaky sensory integration per 50 ms step (tau ~ 0.1 s)
 
@@ -73,8 +74,15 @@ def sense(x, y, th, stim, prev=None):
     # --- vision: two compound eyes, cosine-tuned to +/-30 deg ---------------
     I = light_intensity(x, y, stim["light_x"], stim["light_y"]) * stim["light_on"]
     bearing_light = wrap(np.arctan2(stim["light_y"] - y, stim["light_x"] - x) - th)
-    vL = I * np.maximum(0.0, np.cos(bearing_light - EYE_AXIS))
-    vR = I * np.maximum(0.0, np.cos(bearing_light + EYE_AXIS))
+    # The lamp is above the arena, not a point at eye level: as the fly walks
+    # under it the light moves into the dorsal visual field, which both eyes
+    # share. Without this, sub-millimetre gait sway flipped a point source from
+    # "ahead" to "behind" (blind) and the fly fidgeted on the spot.
+    r_light = np.hypot(stim["light_x"] - x, stim["light_y"] - y)
+    lateral = r_light / np.hypot(r_light, LIGHT_HEIGHT_MM)   # cos(elevation)
+    overhead = np.cos(EYE_AXIS) * (1.0 - lateral)
+    vL = I * (lateral * np.maximum(0.0, np.cos(bearing_light - EYE_AXIS)) + overhead)
+    vR = I * (lateral * np.maximum(0.0, np.cos(bearing_light + EYE_AXIS)) + overhead)
     v_mean = 0.5 * (vL + vR)
     v_contrast = (vL - vR) / (vL + vR + 1e-6)
 
