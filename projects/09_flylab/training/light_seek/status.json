@@ -1,38 +1,38 @@
 {
   "task": "light_seek",
-  "round": 175,
-  "generations": 17500,
-  "physics_runs": 1204,
-  "stale": 1,
+  "round": 190,
+  "generations": 19000,
+  "physics_runs": 1302,
+  "stale": 0,
   "best": {
-    "round": 102,
-    "physics_val": 0.8333333333333334,
-    "physics_reward": 1.7573336283969343,
-    "surrogate": 0.8333333333333334,
+    "round": 190,
+    "physics_val": 1.0,
+    "physics_reward": 1.7450041710813569,
+    "surrogate": 0.75,
     "physics_errors": [
-      0.28,
-      0.12,
-      0.15,
-      0.29,
       0.11,
-      0.18
+      0.31,
+      0.39,
+      0.08,
+      0.32,
+      0.37
     ],
     "n": 6,
-    "time": "2026-09-26T02:29:20"
+    "time": "2026-09-26T05:54:07"
   },
   "test": {
-    "round": 102,
+    "round": 190,
     "physics_test": 0.625,
-    "physics_reward": 1.6688394252993866,
+    "physics_reward": 1.695444787812722,
     "physics_errors": [
-      0.13,
       0.14,
-      0.04,
-      0.14,
-      0.27,
-      0.37,
-      0.3,
-      0.04
+      0.47,
+      0.63,
+      0.05,
+      0.35,
+      0.26,
+      0.05,
+      0.05
     ],
     "n": 8
   },
