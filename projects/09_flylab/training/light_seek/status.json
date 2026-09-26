@@ -1,50 +1,69 @@
 {
   "task": "light_seek",
-  "round": 197,
-  "generations": 19700,
-  "physics_runs": 1344,
-  "stale": 3,
+  "round": 204,
+  "generations": 20400,
+  "physics_runs": 1460,
+  "stale": 0,
   "best": {
-    "round": 190,
-    "physics_val": 1.0,
-    "physics_reward": 1.7450041710813569,
-    "surrogate": 0.75,
+    "round": 204,
+    "physics_val": 0.9166666666666666,
+    "physics_reward": 2.050344001262259,
+    "surrogate": 1.0,
     "physics_errors": [
-      0.11,
-      0.31,
+      0.38,
+      0.37,
+      0.38,
+      0.74,
+      0.69,
+      0.37,
+      0.81,
       0.39,
-      0.08,
-      0.32,
-      0.37
+      0.41,
+      0.42,
+      0.67,
+      0.41
     ],
-    "n": 6,
-    "time": "2026-09-26T05:54:07"
+    "n": 12,
+    "time": "2026-09-26T23:02:35"
   },
   "test": {
-    "round": 190,
-    "physics_test": 0.625,
-    "physics_reward": 1.695444787812722,
+    "round": 204,
+    "physics_test": 0.9375,
+    "physics_reward": 2.1011038521111267,
     "physics_errors": [
-      0.14,
-      0.47,
-      0.63,
-      0.05,
-      0.35,
-      0.26,
-      0.05,
-      0.05
+      0.65,
+      0.37,
+      0.39,
+      0.41,
+      0.4,
+      0.4,
+      0.8,
+      0.44,
+      0.38,
+      0.42,
+      0.41,
+      0.37,
+      0.42,
+      0.4,
+      0.39,
+      0.41
     ],
-    "n": 8
+    "n": 16
   },
   "started": "2026-09-24T23:54:37",
-  "level": 0,
-  "task_version": 2,
-  "reseed_round": 65,
+  "level": 1,
+  "task_version": 3,
+  "reseed_round": 199,
   "rule_changes": [
     {
       "after_round": 1,
       "version": 2,
       "time": "2026-09-25T21:35:54"
+    },
+    {
+      "after_round": 199,
+      "version": 3,
+      "time": "2026-09-26T22:26:07"
     }
   ]
 }
