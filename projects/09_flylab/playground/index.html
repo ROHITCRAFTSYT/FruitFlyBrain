@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FlyLab Brain Playground</title>
+<meta name="description" content="Run the trained FlyLab fruit-fly brains in your browser: move the fly and its target, silence neurons or an antenna, and download the weights.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cellipse cx='16' cy='18' rx='6' ry='9' fill='%23a0662a'/%3E%3Cellipse cx='9' cy='12' rx='6' ry='3' fill='%2399c2ee' opacity='.8'/%3E%3Cellipse cx='23' cy='12' rx='6' ry='3' fill='%2399c2ee' opacity='.8'/%3E%3Ccircle cx='16' cy='8' r='3.5' fill='%23c0392b'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../dashboard/style.css">
+<link rel="stylesheet" href="playground.css">
+</head>
+<body>
+<header class="wrap">
+  <p class="eyebrow">FlyLab · brain playground</p>
+  <h1>Run a trained fruit-fly brain</h1>
+  <p class="lede">
+    Each of the seven skills below is a separate 642-weight neural network, trained with Evolution Strategies and
+    checked in NeuroMechFly v2 physics. Here it runs in your browser on the <strong>calibrated surrogate body</strong>:
+    walking speeds and turn rates measured from the MuJoCo fly at 49 drive settings. Full physics is too heavy for a
+    browser, so each brain's physics film and its held-out physics score are shown next to it.
+  </p>
+  <nav class="meta">
+    <a href="../dashboard/">Live training dashboard</a>
+    <a href="https://github.com/ROHITCRAFTSYT/FruitFlyBrain/tree/main/projects/09_flylab">Source code</a>
+    <a href="#model-card">Model card &amp; downloads</a>
+  </nav>
+  <div id="error" class="error" hidden></div>
+</header>
+
+<main class="wrap">
+  <div class="tabs" id="skills" role="tablist" aria-label="Choose a brain"></div>
+
+  <section class="play">
+    <div class="arena-col">
+      <canvas id="arena" width="640" height="640" aria-label="Arena. Drag the fly, its heading handle, or the target."></canvas>
+      <p class="hint" id="hint"></p>
+      <div class="controls">
+        <button id="run" class="on" type="button">Run</button>
+        <button id="reset" type="button">Reset</button>
+        <button id="random" type="button">Random arena</button>
+        <label class="speed">Speed
+          <select id="speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select>
+        </label>
+        <label class="check"><input type="checkbox" id="noise"> training noise</label>
+      </div>
+      <div id="result" class="result" hidden></div>
+    </div>
+
+    <div class="brain-col">
+      <div class="record" id="record"></div>
+
+      <h3>What it senses <span class="dim">(inputs, after 0.1 s smoothing)</span></h3>
+      <div id="senses" class="bars"></div>
+
+      <h3>32 hidden neurons <span class="dim">click one to silence it</span></h3>
+      <div id="hidden" class="neurons" role="group" aria-label="Hidden neurons"></div>
+
+      <h3>Descending drives <span class="dim">(brain → legs)</span></h3>
+      <div id="drives" class="bars"></div>
+
+      <h3>Lesions</h3>
+      <div class="lesions">
+        <label class="check"><input type="checkbox" data-lesion="leftAntenna"> left antenna</label>
+        <label class="check"><input type="checkbox" data-lesion="rightAntenna"> right antenna</label>
+        <label class="check"><input type="checkbox" data-lesion="leftEye"> left eye</label>
+        <label class="check"><input type="checkbox" data-lesion="rightEye"> right eye</label>
+      </div>
+      <p class="note">Silencing an antenna or eye reads that side as zero. Flies with one antenna removed tend to
+        turn toward the intact side; see whether this brain does.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Test it on many arenas</h2>
+    <p class="note">Runs the current brain, with your lesions and silenced neurons, on random arenas from the same
+      distribution it was trained on, with training noise on. Takes a second or two.</p>
+    <div class="controls">
+      <button id="batch" type="button">Test on 200 random arenas</button>
+      <span id="batch-out" class="batch-out"></span>
+    </div>
+  </section>
+
+  <section>
+    <h2>The same brain in MuJoCo physics</h2>
+    <div class="film">
+      <video id="film" class="video" controls muted loop playsinline preload="metadata"></video>
+      <p class="video-cap" id="film-cap"></p>
+    </div>
+  </section>
+
+  <section id="model-card">
+    <h2>Model card</h2>
+    <div class="card-grid">
+      <div>
+        <h3>Architecture</h3>
+        <p class="note">17 inputs (10 senses + a one-hot task cue) → 32 tanh units → 2 outputs.
+          Output <code>d = 0.35 + 0.85·tanh(o)</code>, then a motor gate: |d| &lt; 0.02 is exactly 0, fading to full
+          strength by 0.10. 642 float64 weights. One network per skill.</p>
+        <h3>Training</h3>
+        <p class="note">OpenAI-style Evolution Strategies (32 antithetic candidates, 16 arenas per generation, common
+          random numbers, centered ranks, Adam), 100 generations per round in the surrogate. After every round the
+          candidate is validated in MuJoCo; a brain is only replaced if it does better in physics. Mastery goes in
+          three levels (6, 12, 24 validation arenas). The quoted test score uses 8–32 arenas that are never used
+          to choose a brain.</p>
+        <h3>Known limits</h3>
+        <p class="note">Odor and light are smooth analytic fields, not turbulent plumes or rendered vision. The
+          brain is learned, not wired from the connectome. This page runs the surrogate body, which matches
+          physics closely for steady walking but not every transient.</p>
+      </div>
+      <div>
+        <h3>Downloads</h3>
+        <ul class="downloads" id="downloads"></ul>
+        <h3>Use a brain in Python</h3>
+<pre><code>import numpy as np
+theta = np.load("odor_seek.npy")          # 642 float64
+W1, b1 = theta[:544].reshape(17, 32), theta[544:576]
+W2, b2 = theta[576:640].reshape(32, 2), theta[640:]
+
+def act(senses, task_index):
+    """senses: the 10 values world.sense() returns; task_index: 0-6."""
+    x = np.concatenate([senses, np.eye(7)[task_index]])
+    d = 0.35 + 0.85 * np.tanh(np.tanh(x @ W1 + b1) @ W2 + b2)
+    return d * np.clip((np.abs(d) - 0.02) / 0.08, 0, 1)   # [left, right]</code></pre>
+        <p class="note">Task order: walk_forward, turn, goto, odor_seek, odor_avoid, light_seek, light_avoid.
+          The senses come from <a href="https://github.com/ROHITCRAFTSYT/FruitFlyBrain/blob/main/projects/09_flylab/world.py">world.py</a>.
+          This page's engine (<a href="flybrain.js">flybrain.js</a>) matches the Python code to 1e-11 on every brain
+          (<a href="https://github.com/ROHITCRAFTSYT/FruitFlyBrain/tree/main/projects/09_flylab/playground/tools">parity test</a>).</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap">
+  <p class="dim">FlyLab · part of <a href="https://github.com/ROHITCRAFTSYT/FruitFlyBrain">FruitFlyBrain</a>.
+    Fly body: NeuroMechFly v2 (Wang-Chen et al., Nature Methods 2024), EPFL, Apache-2.0. Code: MIT.</p>
+</footer>
+<script type="module" src="app.js"></script>
+</body>
+</html>

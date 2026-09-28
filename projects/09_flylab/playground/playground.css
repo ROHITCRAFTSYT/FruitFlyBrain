@@ -1,0 +1,56 @@
+/* Playground additions on top of ../dashboard/style.css (same tokens, same type). */
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 18px 0 14px; }
+
+.play { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+@media (max-width: 860px) { .play { grid-template-columns: minmax(0, 1fr); } }
+
+#arena {
+  width: 100%; height: auto; aspect-ratio: 1; display: block; touch-action: none;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px; cursor: grab;
+}
+#arena.dragging { cursor: grabbing; }
+.hint { margin: 6px 2px 10px; color: var(--muted); font-size: .85rem; }
+.controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.controls label, .lesions label { font-size: .85rem; color: var(--text-2); display: inline-flex; align-items: center; gap: 6px; }
+.controls select { font: inherit; font-size: .85rem; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 3px 6px; }
+.lesions { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+
+.result { margin-top: 12px; padding: 10px 12px; border-radius: 8px; font-size: .9rem; }
+.result.pass { background: var(--good-bg); color: var(--good-fg); }
+.result.fail { background: var(--warn-bg); color: var(--warn-fg); }
+
+.brain-col h3 { font-size: .92rem; margin: 18px 0 6px; }
+.brain-col h3 .dim { font-weight: 400; font-size: .8rem; }
+.record { border: 1px solid var(--border); background: var(--surface); border-radius: 10px; padding: 10px 12px; font-size: .88rem; }
+.record .line { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
+.record .big { font-size: 1.3rem; font-weight: 650; font-variant-numeric: tabular-nums; }
+
+.bars { display: grid; grid-template-columns: 9.5em minmax(0, 1fr) 4.2em; gap: 3px 8px; font-size: .8rem; align-items: center; }
+.bars .lbl { color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bars .val { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+.bars .track { position: relative; height: 10px; background: var(--grid); border-radius: 3px; overflow: hidden; }
+.bars .track i { position: absolute; top: 0; bottom: 0; background: var(--s1); }
+.bars .track b { position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; background: var(--muted); }
+.bars.drives .track i { background: var(--s2); }
+.bars .off { opacity: .35; }
+
+.neurons { display: grid; grid-template-columns: repeat(16, minmax(0, 1fr)); gap: 3px; }
+.neurons button {
+  aspect-ratio: 1; padding: 0; border-radius: 4px; border: 1px solid var(--border);
+  font-size: .6rem; line-height: 1; color: transparent; min-width: 0;
+}
+.neurons button.silenced { color: var(--text); background: var(--surface) !important; border-style: dashed; }
+
+.batch-out { font-size: .9rem; color: var(--text-2); font-variant-numeric: tabular-nums; }
+
+.film { max-width: 760px; }
+.film video { width: 100%; }
+
+.card-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 26px; }
+@media (max-width: 860px) { .card-grid { grid-template-columns: minmax(0, 1fr); } }
+.card-grid h3 { font-size: .95rem; margin: 14px 0 4px; }
+.downloads { margin: 0; padding-left: 18px; font-size: .88rem; }
+.downloads li { margin: 2px 0; }
+pre { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; overflow-x: auto; font-size: .8rem; line-height: 1.45; }
+code { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; }
+section { margin-bottom: 8px; }

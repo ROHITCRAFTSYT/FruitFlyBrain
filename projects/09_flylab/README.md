@@ -110,6 +110,32 @@ curriculum) → **57%** (shared brain after a long curriculum: forgetting) →
 per-skill brains with continuous physics-validated training:
 <!-- FINAL_TRANSFER --> see [`training/TRAINING.md`](training/TRAINING.md) (updated live).
 
+## Brain playground (in the browser)
+
+[**Open the playground**](https://rohitcraftsyt.github.io/FruitFlyBrain/projects/09_flylab/playground/)
+([`playground/`](playground)). Pick a skill, drag the fly and its target, and
+run the trained brain. The page shows the 10 senses, the 32 hidden neurons and
+the two descending drives live. You can silence neurons, remove an antenna or
+an eye, test the brain on 200 random arenas (with a Wilson confidence
+interval), watch the same brain's MuJoCo film, and download its weights
+(`.npy` or `.json`).
+
+It runs the calibrated **surrogate** body, not MuJoCo, and says so on the page.
+[`playground/flybrain.js`](playground/flybrain.js) is a port of `world.py`,
+`brain.py`, `surrogate.py` and the `tasks.py` scoring. It is checked against
+the Python training code:
+
+```bash
+cd playground/tools
+..\..\..\..\.venv-sim\Scripts\python make_reference.py   # record Python runs of every brain
+node check_core.mjs                                      # 14/14 runs match to <1e-11, same verdicts
+```
+
+With training noise on, its success rates match `trainer.evaluate` to within
+about 3 points on 400 arenas per brain. Re-run
+`tools/export_calibration.py` if the body is recalibrated. The brains
+themselves are read live from `state/brains/`.
+
 ## Continuous training: every brain, its own process
 
 ```bash

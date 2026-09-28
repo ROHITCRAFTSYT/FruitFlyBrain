@@ -25,6 +25,8 @@ repo ([`make_gifs.py`](make_gifs.py)).
 </p>
 
 **👉 Watch the brains train live: [training dashboard](https://rohitcraftsyt.github.io/FruitFlyBrain/projects/09_flylab/dashboard/)**
+**👉 Run the trained brains yourself: [brain playground](https://rohitcraftsyt.github.io/FruitFlyBrain/projects/09_flylab/playground/)**,
+which lets you drag the fly and its target, silence neurons or an antenna, test 200 arenas, and download the weights.
 
 ---
 

@@ -30,3 +30,7 @@ datasets/flywire_fafb/*
 Thumbs.db
 .idea/
 .vscode/
+
+# local tool config
+.claude/
+projects/09_flylab/playground/tools/reference.json
