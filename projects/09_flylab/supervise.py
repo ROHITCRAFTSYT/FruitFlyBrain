@@ -7,8 +7,13 @@ fewest turns first, then weakest skill. Each process trains for a time slice (--
 then yields its CPU core, so a hard skill can't starve the others. Crashed
 workers are logged and relaunched; results are committed and pushed to git
 every --push-every hours, and brains that changed are re-filmed in MuJoCo
-(render_brains.py) for the dashboard. It stops by itself once every skill is optimal
-(or has used up --max-rounds).
+(render_brains.py) for the dashboard.
+
+It never stops on its own. Skills below optimal get CPU first; spare slots
+polish optimal brains (train_brains.py --polish: a polished brain is kept only
+if it is still optimal afterwards). Once a day it runs daily.py (fresh-arena
+checks, README status table, GIFs) and resets crash counters. autostart.py keeps
+it running across reboots.
 
     ..\\..\\.venv-sim\\Scripts\\python supervise.py              # 2 workers, 1 h slices
     ..\\..\\.venv-sim\\Scripts\\python supervise.py --workers 1  # one core only
@@ -27,7 +32,7 @@ import subprocess
 import sys
 import time
 import traceback
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -44,6 +49,8 @@ MAX_CRASHES = 3              # consecutive crashes before a skill is set aside
 # closing) elsewhere can't take the whole training run down with it.
 DETACH = (subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW) if sys.platform == "win32" else 0
 TRAILER = "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+DAILY_STAMP = LOGS / "daily_last.txt"   # date of the last daily.py run
+POLISH_MAX_ROUNDS = 1_000_000
 
 
 def _now():
@@ -61,6 +68,10 @@ def status(task):
     return json.loads(p.read_text()) if p.exists() else {"round": 0, "level": 0, "best": None}
 
 
+
+
+def daily_due():
+    return not DAILY_STAMP.exists() or DAILY_STAMP.read_text().strip() != date.today().isoformat()
 
 
 def weakness(task):
@@ -85,7 +96,7 @@ def render_videos(proc):
 
 def push_progress():
     rel = HERE.relative_to(REPO).as_posix()
-    git("add", f"{rel}/training", f"{rel}/state/brains", f"{rel}/dashboard/videos")
+    git("add", f"{rel}/training", f"{rel}/state/brains", f"{rel}/dashboard/videos", "README.md", "docs/gifs")
     if not git("diff", "--cached", "--quiet").returncode:
         return                                              # nothing new
     lines = []
@@ -96,6 +107,7 @@ def push_progress():
                      + f", physics val {b.get('physics_val', 0):.0%} of {b.get('n', 6)}, round {st['round']}")
     msg = "FlyLab: continuous training progress\n\n" + "\n".join(lines) + f"\n\n{TRAILER}\n"
     c = git("commit", "-q", "-m", msg)
+    git("pull", "-q", "--rebase", "--autostash", "origin", "main")   # don't fail if GitHub is ahead
     p = git("push", "-q", "origin", "HEAD")
     say(f"git commit/push: {'ok' if not c.returncode and not p.returncode else (c.stderr + p.stderr).strip()}")
 
@@ -121,6 +133,7 @@ def main():
     renderer = None
     turns = {t: 0 for t in T.TASKS}      # round-robin: fewest turns first, then weakest
     last_push = time.time()
+    daily = None
 
     while True:
         for task, proc in list(running.items()):
@@ -131,24 +144,36 @@ def main():
             crashes[task] = 0 if code == 0 else crashes[task] + 1
             say(f"[{task}] trainer exited with code {code}" + (f" (crash {crashes[task]}/{MAX_CRASHES})" if code else ""))
 
-        pending = [t for t in T.TASKS if not optimal(status(t)) and status(t)["round"] < args.max_rounds
-                   and crashes[t] < MAX_CRASHES and t not in running]
-        if not pending and not running:
+        # once a day: fresh-arena checks, README table, GIFs (takes one worker slot)
+        if daily is not None and daily.poll() is not None:
+            say(f"daily.py finished with code {daily.returncode}")
+            daily = None
             write_summary()
-            say("every skill is optimal (or out of rounds / set aside). Done.")
             if args.push_every:
                 push_progress()
-            break
+        if daily is None and daily_due():
+            DAILY_STAMP.write_text(date.today().isoformat())
+            crashes = {t: 0 for t in T.TASKS}               # give set-aside skills a fresh chance
+            log = open(LOGS / "daily.log", "a", encoding="utf-8")
+            daily = subprocess.Popen([sys.executable, "-u", "daily.py"], cwd=HERE, stdout=log,
+                                     stderr=subprocess.STDOUT, creationflags=DETACH)
+            say(f"daily.py started (pid {daily.pid})")
 
-        for task in sorted(pending, key=lambda t: (turns[t], weakness(t)))[:max(0, args.workers - len(running))]:
+        # skills below optimal first; spare slots polish optimal brains (never exits)
+        ok = lambda t: crashes[t] < MAX_CRASHES and t not in running
+        pending = [(t, False) for t in T.TASKS if ok(t) and not optimal(status(t)) and status(t)["round"] < args.max_rounds]
+        polish = [(t, True) for t in T.TASKS if ok(t) and optimal(status(t))]
+        free = max(0, args.workers - len(running) - (daily is not None))
+        queue = sorted(pending, key=lambda x: (turns[x[0]], weakness(x[0]))) +             sorted(polish, key=lambda x: (turns[x[0]], weakness(x[0])))
+        for task, pol in queue[:free]:
             log = open(LOGS / f"{task}.log", "a", encoding="utf-8")
-            running[task] = subprocess.Popen(
-                [sys.executable, "-u", "train_brains.py", "--skills", task, "--hours", str(args.slice),
-                 "--val", str(args.val), "--test", str(args.test), "--max-rounds", str(args.max_rounds)],
-                cwd=HERE, stdout=log, stderr=subprocess.STDOUT, creationflags=DETACH)
+            cmd = [sys.executable, "-u", "train_brains.py", "--skills", task, "--hours", str(args.slice),
+                   "--val", str(args.val), "--test", str(args.test),
+                   "--max-rounds", str(POLISH_MAX_ROUNDS if pol else args.max_rounds)] + (["--polish"] if pol else [])
+            running[task] = subprocess.Popen(cmd, cwd=HERE, stdout=log, stderr=subprocess.STDOUT, creationflags=DETACH)
             turns[task] += 1
-            say(f"[{task}] trainer started (pid {running[task].pid}), level "
-                f"{status(task).get('level', 0) + 1}/{len(LEVELS)}")
+            say(f"[{task}] trainer started (pid {running[task].pid}), "
+                + ("polishing an optimal brain" if pol else f"level {status(task).get('level', 0) + 1}/{len(LEVELS)}"))
 
         if args.push_every and time.time() - last_push > args.push_every * 3600:
             push_progress()

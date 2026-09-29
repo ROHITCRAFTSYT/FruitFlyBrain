@@ -60,6 +60,11 @@ walking controller.
   better **in physics**, and every new best is scored on **held-out physics
   arenas never used for selection**. Mastery is progressive over three levels
   (6 → 12 → 24 validation arenas).
+- **Runs itself.** It restarts after reboots, spare CPU polishes optimal brains
+  (a result is kept only if it stays optimal), and every day each brain is
+  re-tested on new random physics arenas. The status table below rewrites
+  itself daily and results are pushed hourly. See
+  [autonomous operation](projects/09_flylab/README.md#autonomous-operation-no-one-needs-to-touch-it).
 - **Realistic senses.** Odor is sampled at the model's **measured aristae**
   (0.52 mm ahead of the thorax, 0.38 mm apart), there are two compound eyes,
   and the gait wobble (0.15 mm and 3.6° per step), measured in physics, is fed
@@ -83,18 +88,19 @@ automatically as training improves it.*
   <img src="docs/gifs/p09_flylab_training.gif" width="95%" alt="Seven FlyLab brains training">
 </p>
 
-**Snapshot (2026-09-26)**, from [`training/TRAINING.md`](projects/09_flylab/training/TRAINING.md);
-the [dashboard](https://rohitcraftsyt.github.io/FruitFlyBrain/projects/09_flylab/dashboard/) is always current:
+<!-- BRAINS:START -->
+**Status on 2026-09-29** (rewritten daily by `daily.py`; the [dashboard](https://rohitcraftsyt.github.io/FruitFlyBrain/projects/09_flylab/dashboard/) is live):
 
-| Skill brain | Rounds | Physics validation | **Held-out physics test** (95% CI) | Status |
-|---|---:|---:|---:|---|
-| Walk forward | 28 | 100% of 24 | **100% of 32** (89–100%) | ✅ optimal |
-| Turn in place | 3 | 96% of 24 | **91% of 32** (76–97%) | ✅ optimal |
-| Go to a location | 33 | 100% of 24 | **100% of 32** (89–100%) | ✅ optimal |
-| Find food by smell | 61 | 100% of 24 | **100% of 32** (89–100%) | ✅ optimal |
-| Hide from light | 21 | 100% of 24 | **100% of 32** (89–100%) | ✅ optimal |
-| Escape a bad smell | 201 | 100% of 6 | 100% of 8 (68–100%) | 🔄 training (level 1/3) |
-| Walk toward light | 193 | 100% of 6 | 62% of 8 (31–86%) | 🔄 training (level 1/3) |
+| Skill brain | Rounds | Physics validation | **Held-out physics test** (95% CI) | Fresh-arena check | Status |
+|---|---:|---:|---:|---:|---|
+| Walk forward | 28 | 100% of 24 | **100% of 32** (89%–100%) | – | ✅ optimal |
+| Turn in place | 3 | 96% of 24 | **91% of 32** (76%–97%) | – | ✅ optimal |
+| Go to a location | 33 | 100% of 24 | **100% of 32** (89%–100%) | – | ✅ optimal |
+| Find food by smell | 61 | 100% of 24 | **100% of 32** (89%–100%) | – | ✅ optimal |
+| Escape a bad smell | 202 | 96% of 24 | **97% of 32** (84%–99%) | – | ✅ optimal |
+| Walk toward light | 204 | 92% of 12 | **94% of 16** (72%–99%) | – | 🔄 training (level 2/3) |
+| Hide from light | 21 | 96% of 24 | **97% of 32** (84%–99%) | – | ✅ optimal |
+<!-- BRAINS:END -->
 
 **How it got here** (full [engineering log](projects/09_flylab/README.md#making-skills-survive-the-jump-to-physics-engineering-log)):
 each failure was measured in physics and then fixed.
@@ -234,7 +240,7 @@ sharpening as trees are added.
 | 06 | Cell-type classifier | **88%** accuracy, 53 classes (baseline 11%) |
 | 07 | Unsupervised cell typing | NMI **0.59** with no labels |
 | 08 | Synapse link prediction | ROC-AUC **0.971** on unseen connections |
-| 09 | FlyLab | **5 of 7** brains optimal (91–100% on held-out physics tests); 2 still training |
+| 09 | FlyLab | **<!-- OPT -->6 of 7<!-- /OPT -->** brains optimal on held-out physics tests; the rest keep training (table above) |
 
 📄 **[`RESUME.md`](RESUME.md)** has paste-ready, quantified résumé bullets for all of this.
 

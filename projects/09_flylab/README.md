@@ -181,6 +181,31 @@ slices so no stuck skill starves the others. It relaunches crashed workers,
 commits and pushes the reports every hour, and exits once every brain is
 optimal.
 
+## Autonomous operation (no one needs to touch it)
+
+Once installed, the whole loop runs by itself on the training PC:
+
+| What | When | Does |
+|---|---|---|
+| `supervise.py` | always | trains skills below optimal first; spare CPU **polishes** optimal brains; commits and pushes every hour |
+| `train_brains.py --polish` | when a core is free | keeps training an optimal brain; the result is kept **only if it is still optimal afterwards** (a candidate that scores higher on validation but falls under 90% on the held-out test is rolled back), so a deployed brain never regresses |
+| `daily.py` | once a day | `recheck.py` re-runs every optimal brain on **16 new random physics arenas** (a new set every day) → [`training/CHECKS.md`](training/CHECKS.md); rewrites the README status table; regenerates the GIFs and brain films |
+| `autostart.py` | at sign-in + hourly | a Startup-folder entry and the hourly Windows task *FlyLab supervisor watchdog* restart the supervisor if it isn't running (idempotent: never a second copy) |
+| daily AI review | every evening, ~21:15 (Claude app) | reads the logs and checks; if a skill is stuck or a fresh check drops under 80%, it diagnoses the cause, fixes it, documents it in the engineering log above and pushes |
+
+```bash
+..\..\.venv-sim\Scripts\python autostart.py status    # running? installed?
+..\..\.venv-sim\Scripts\python autostart.py install   # set it up on a new PC
+..\..\.venv-sim\Scripts\python autostart.py remove    # uninstall the autostart pieces
+```
+
+Notes: the supervisor keeps Windows from sleeping while it trains
+(`--keep-awake`); the display can still turn off. The hourly task needs you to be
+signed in. The daily AI review only runs while the Claude desktop app is open; a
+missed day runs at the next launch. The polish rollback uses the held-out test
+only as a veto (it can reject a candidate, never choose between candidates), so
+the fresh daily arenas are the independent check.
+
 ## Setup (separate environment; FlyGym pins its own versions)
 
 ```bash
@@ -235,6 +260,12 @@ Flags: `--no-video` (physics but no rendering, faster), `--no-physics`
 | `calibrate.py` | measures the physics body → `state/calibration.npz` |
 | `evaluate_physics.py` | runs the current brain on random arenas in full physics → transfer success table |
 | `render.py` | composite video + HUD, trajectory maps, learning charts |
+| `supervise.py` | runs the trainers unattended: priorities, polishing, daily job, hourly git push |
+| `daily.py` / `recheck.py` | daily fresh-arena physics checks, README status table, GIF refresh |
+| `autostart.py` | sign-in entry + hourly watchdog task that keep the supervisor running |
+| `render_brains.py` | re-films brains that changed, for the dashboard and README |
+| `reflexes.py` | innate reflexes used to seed brains that can't get started (chemotaxis, escape) |
+| `playground/` | in-browser brain playground (see above) |
 
 ## Honest limits
 

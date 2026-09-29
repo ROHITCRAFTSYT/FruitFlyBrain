@@ -46,6 +46,7 @@ os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
 os.environ.setdefault("MKL_NUM_THREADS", "1")
 
 import argparse
+import copy
 import json
 import sys
 import time
@@ -258,7 +259,7 @@ def level_up(run: SkillRun, n_val, n_test, say):
         f"{n_val * k} val arenas {pv:.0%} | {n_test * k} test arenas {pt:.0%}")
 
 
-def run_round(run: SkillRun, body, n_val, n_test, say):
+def run_round(run: SkillRun, body, n_val, n_test, say, polish=False):
     st = run.status
     if st.get("task_version", 1) != T.TASK_VERSION[run.task]:
         rescore_for_new_rules(run, body, n_val, n_test, say)
@@ -268,8 +269,12 @@ def run_round(run: SkillRun, body, n_val, n_test, say):
         level_up(run, n_val, n_test, say)
         write_skill_report(run)
         write_summary()
-    if run.optimal:
+    was_optimal = run.optimal
+    if was_optimal and not polish:
         return
+    # polish mode keeps improving optimal brains; a polished brain is only kept
+    # if it is still optimal afterwards, so the deployed brain never regresses
+    prev = (copy.deepcopy(st["best"]), copy.deepcopy(st.get("test")), run.brain.theta(run.task).copy())
     k = LEVELS[run.level][0]
     n_val, n_test = n_val * k, n_test * k
     st["round"] += 1
@@ -306,6 +311,14 @@ def run_round(run: SkillRun, body, n_val, n_test, say):
             st["test"] = {"round": r, "physics_test": pt, "physics_reward": ptrew,
                           "physics_errors": ptdet, "n": n_test}
             row["physics_test"] = pt
+        if was_optimal and not run.optimal:      # polish broke optimality: roll back
+            st["best"], st["test"], old = prev
+            run.brain.set_theta(run.task, old)
+            run.brain.save(run.task)
+            np.save(run.dir / "best.npy", old)
+            np.save(run.cand_path, old)
+            improved = row["improved"] = False
+            row["polish_rejected"] = True
     else:
         st["stale"] += 1
         lineage = [x["surrogate"] for x in run.rows() if x["round"] > st.get("reseed_round", 0)] + [sur]
@@ -325,8 +338,9 @@ def run_round(run: SkillRun, body, n_val, n_test, say):
     _update_flylab_history(run)
     write_skill_report(run)
     write_summary()
-    tag = "NEW BEST" if improved else f"no gain ({st['stale']}/{PATIENCE})"
-    test = f" | test {st['test']['physics_test']:.0%}" if improved and st.get("test") else ""
+    tag = ("NEW BEST" if improved else "polish rejected (would lose optimality)" if row.get("polish_rejected")
+           else f"no gain ({st['stale']}/{PATIENCE})")
+    test = f" | test {row['physics_test']:.0%}" if "physics_test" in row else ""
     say(f"[{run.task}] round {r}: surrogate {sur0:.0%}->{sur:.0%} | physics val {pv:.0%} "
         f"(reward {prew:+.2f}){test} | {tag} | {row['seconds']:.0f}s")
 
@@ -450,6 +464,8 @@ def main():
     ap.add_argument("--val", type=int, default=6, help="physics validation arenas per round")
     ap.add_argument("--test", type=int, default=8, help="held-out physics test arenas per new best")
     ap.add_argument("--max-rounds", type=int, default=400, help="stop a skill after this many rounds")
+    ap.add_argument("--polish", action="store_true",
+                    help="also keep training optimal brains (kept only if they stay optimal)")
     args = ap.parse_args()
 
     body = SG.Body()
@@ -460,7 +476,7 @@ def main():
     say(f"continuous training: {', '.join(args.skills)} | val {args.val} / test {args.test} arenas")
 
     while True:
-        active = [r for r in runs.values() if not r.optimal and r.status["round"] < args.max_rounds]
+        active = [r for r in runs.values() if (args.polish or not r.optimal) and r.status["round"] < args.max_rounds]
         if not active:
             say("every selected skill is optimal or has reached --max-rounds. Done.")
             break
@@ -468,7 +484,7 @@ def main():
             say("time budget reached. Run again to continue where this left off.")
             break
         run = min(active, key=lambda r: (r.level, r.best_key, r.status["round"]))   # weakest first
-        run_round(run, body, args.val, args.test, say)
+        run_round(run, body, args.val, args.test, say, polish=args.polish)
 
 
 if __name__ == "__main__":
