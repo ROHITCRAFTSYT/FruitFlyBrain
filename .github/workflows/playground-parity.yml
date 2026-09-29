@@ -1,0 +1,49 @@
+name: Playground parity
+
+# The browser playground (projects/09_flylab/playground/flybrain.js) must compute
+# exactly what the Python training code computes. This records reference runs of
+# every trained brain with the Python code and replays them in Node.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "projects/09_flylab/playground/**"
+      - "projects/09_flylab/state/**"
+      - "projects/09_flylab/brain.py"
+      - "projects/09_flylab/world.py"
+      - "projects/09_flylab/surrogate.py"
+      - "projects/09_flylab/tasks.py"
+      - ".github/workflows/playground-parity.yml"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444  # v5.0.0
+        with:
+          node-version: "22"
+      - name: Install numpy
+        run: python -m pip install --quiet "numpy>=2,<3"
+      - name: Record Python reference runs
+        working-directory: projects/09_flylab/playground/tools
+        run: |
+          python export_calibration.py
+          python make_reference.py
+      - name: Replay them in the browser engine
+        working-directory: projects/09_flylab/playground/tools
+        run: node check_core.mjs
+      - name: Calibration export is committed and current
+        run: git diff --exit-code -- projects/09_flylab/playground/calibration.json
