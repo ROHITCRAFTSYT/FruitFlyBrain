@@ -106,18 +106,18 @@
       "skill": "light_avoid",
       "file": "light_avoid.mp4",
       "poster": "light_avoid.png",
-      "brain_round": 22,
+      "brain_round": 24,
       "level": 2,
       "arena": "lamp 6.2 mm away, 130 deg to the left",
       "success": true,
-      "final_error": 33.7,
+      "final_error": 34.9,
       "unit": "mm gained",
-      "outcome": "moved +33.7 mm further away (pass: > 6 mm, never approaching)",
+      "outcome": "moved +34.9 mm further away (pass: > 6 mm, never approaching)",
       "seed": 30006,
       "sim_seconds": 4.0,
       "video_seconds": 8.0,
       "playback_speed": 0.5,
-      "rendered_at": "2026-09-30T19:38:59"
+      "rendered_at": "2026-09-30T20:37:24"
     }
   ]
 }
