@@ -89,17 +89,17 @@ automatically as training improves it.*
 </p>
 
 <!-- BRAINS:START -->
-**Status on 2026-09-29** (rewritten daily by `daily.py`; the [dashboard](https://rohitcraftsyt.github.io/FruitFlyBrain/projects/09_flylab/dashboard/) is live):
+**Status on 2026-09-30** (rewritten daily by `daily.py`; the [dashboard](https://rohitcraftsyt.github.io/FruitFlyBrain/projects/09_flylab/dashboard/) is live):
 
 | Skill brain | Rounds | Physics validation | **Held-out physics test** (95% CI) | Fresh-arena check | Status |
 |---|---:|---:|---:|---:|---|
-| Walk forward | 28 | 100% of 24 | **100% of 32** (89%–100%) | – | ✅ optimal |
-| Turn in place | 3 | 96% of 24 | **91% of 32** (76%–97%) | – | ✅ optimal |
-| Go to a location | 33 | 100% of 24 | **100% of 32** (89%–100%) | – | ✅ optimal |
-| Find food by smell | 61 | 100% of 24 | **100% of 32** (89%–100%) | – | ✅ optimal |
-| Escape a bad smell | 202 | 96% of 24 | **97% of 32** (84%–99%) | – | ✅ optimal |
-| Walk toward light | 204 | 92% of 12 | **94% of 16** (72%–99%) | – | 🔄 training (level 2/3) |
-| Hide from light | 21 | 96% of 24 | **97% of 32** (84%–99%) | – | ✅ optimal |
+| Walk forward | 28 | 100% of 24 | **100% of 32** (89%–100%) | 100% of 16 (2026-09-30) | ✅ optimal |
+| Turn in place | 4 | 96% of 24 | **91% of 32** (76%–97%) | 81% of 16 (2026-09-30) | ✅ optimal |
+| Go to a location | 33 | 100% of 24 | **100% of 32** (89%–100%) | 100% of 16 (2026-09-30) | ✅ optimal |
+| Find food by smell | 61 | 100% of 24 | **100% of 32** (89%–100%) | 100% of 16 (2026-09-30) | ✅ optimal |
+| Escape a bad smell | 202 | 96% of 24 | **97% of 32** (84%–99%) | 94% of 16 (2026-09-30) | ✅ optimal |
+| Walk toward light | 205 | 100% of 24 | **97% of 32** (84%–99%) | 100% of 16 (2026-09-30) | ✅ optimal |
+| Hide from light | 21 | 96% of 24 | **97% of 32** (84%–99%) | 94% of 16 (2026-09-30) | ✅ optimal |
 <!-- BRAINS:END -->
 
 **How it got here** (full [engineering log](projects/09_flylab/README.md#making-skills-survive-the-jump-to-physics-engineering-log)):
@@ -240,7 +240,7 @@ sharpening as trees are added.
 | 06 | Cell-type classifier | **88%** accuracy, 53 classes (baseline 11%) |
 | 07 | Unsupervised cell typing | NMI **0.59** with no labels |
 | 08 | Synapse link prediction | ROC-AUC **0.971** on unseen connections |
-| 09 | FlyLab | **<!-- OPT -->6 of 7<!-- /OPT -->** brains optimal on held-out physics tests; the rest keep training (table above) |
+| 09 | FlyLab | **<!-- OPT -->7 of 7<!-- /OPT -->** brains optimal on held-out physics tests; the rest keep training (table above) |
 
 📄 **[`RESUME.md`](RESUME.md)** has paste-ready, quantified résumé bullets for all of this.
 
