@@ -134,6 +134,7 @@ def main():
     turns = {t: 0 for t in T.TASKS}      # round-robin: fewest turns first, then weakest
     last_push = time.time()
     daily = None
+    daily_tried = None
 
     while True:
         for task, proc in list(running.items()):
@@ -147,12 +148,14 @@ def main():
         # once a day: fresh-arena checks, README table, GIFs (takes one worker slot)
         if daily is not None and daily.poll() is not None:
             say(f"daily.py finished with code {daily.returncode}")
+            if daily.returncode == 0:   # stamp only on success: a run cut off by shutdown retries after reboot
+                DAILY_STAMP.write_text(date.today().isoformat())
             daily = None
             write_summary()
             if args.push_every:
                 push_progress()
-        if daily is None and daily_due():
-            DAILY_STAMP.write_text(date.today().isoformat())
+        if daily is None and daily_due() and daily_tried != date.today():
+            daily_tried = date.today()                      # at most one attempt per day per supervisor run
             crashes = {t: 0 for t in T.TASKS}               # give set-aside skills a fresh chance
             log = open(LOGS / "daily.log", "a", encoding="utf-8")
             daily = subprocess.Popen([sys.executable, "-u", "daily.py"], cwd=HERE, stdout=log,
