@@ -27,6 +27,7 @@ from __future__ import annotations
 import argparse
 import ctypes
 import json
+import re
 import signal
 import subprocess
 import sys
@@ -68,6 +69,26 @@ def status(task):
     return json.loads(p.read_text()) if p.exists() else {"round": 0, "level": 0, "best": None}
 
 
+
+
+def foreign_jobs():
+    """Skills (and "daily") whose train_brains.py / daily.py is already running but
+    isn't ours -- e.g. workers orphaned when an earlier supervisor was killed.
+    Starting a second trainer on such a skill would interleave two processes
+    writing the same status/log files, so those skills wait until it exits."""
+    if sys.platform != "win32":
+        return set()
+    r = subprocess.run(["powershell", "-NoProfile", "-Command",
+                        "Get-CimInstance Win32_Process -Filter \"Name='python.exe'\" | "
+                        "ForEach-Object { $_.CommandLine }"], capture_output=True, text=True)
+    jobs = set()
+    for line in r.stdout.splitlines():
+        if "daily.py" in line:
+            jobs.add("daily")
+        m = re.search(r"train_brains\.py\s.*--skills\s+(\S+)", line)
+        if m:
+            jobs.add(m.group(1))
+    return jobs
 
 
 def daily_due():
@@ -135,6 +156,7 @@ def main():
     last_push = time.time()
     daily = None
     daily_tried = None
+    reported = set()
 
     while True:
         for task, proc in list(running.items()):
@@ -154,7 +176,16 @@ def main():
             write_summary()
             if args.push_every:
                 push_progress()
-        if daily is None and daily_due() and daily_tried != date.today():
+        # anything still running from an earlier (killed) supervisor counts as busy
+        busy = len(running) + (daily is not None)
+        foreign = set()
+        if busy < args.workers or (daily is None and daily_due()):   # only look when we'd start something
+            foreign = foreign_jobs() - set(running) - ({"daily"} if daily is not None else set())
+        if foreign != reported:
+            if foreign:
+                say(f"waiting for jobs left by an earlier supervisor: {sorted(foreign)}")
+            reported = foreign
+        if daily is None and "daily" not in foreign and daily_due() and daily_tried != date.today():
             daily_tried = date.today()                      # at most one attempt per day per supervisor run
             crashes = {t: 0 for t in T.TASKS}               # give set-aside skills a fresh chance
             log = open(LOGS / "daily.log", "a", encoding="utf-8")
@@ -163,10 +194,10 @@ def main():
             say(f"daily.py started (pid {daily.pid})")
 
         # skills below optimal first; spare slots polish optimal brains (never exits)
-        ok = lambda t: crashes[t] < MAX_CRASHES and t not in running
+        ok = lambda t: crashes[t] < MAX_CRASHES and t not in running and t not in foreign
         pending = [(t, False) for t in T.TASKS if ok(t) and not optimal(status(t)) and status(t)["round"] < args.max_rounds]
         polish = [(t, True) for t in T.TASKS if ok(t) and optimal(status(t))]
-        free = max(0, args.workers - len(running) - (daily is not None))
+        free = max(0, args.workers - len(running) - (daily is not None) - len(foreign))
         queue = sorted(pending, key=lambda x: (turns[x[0]], weakness(x[0]))) +             sorted(polish, key=lambda x: (turns[x[0]], weakness(x[0])))
         for task, pol in queue[:free]:
             log = open(LOGS / f"{task}.log", "a", encoding="utf-8")
