@@ -21,18 +21,18 @@
       "skill": "turn",
       "file": "turn.mp4",
       "poster": "turn.png",
-      "brain_round": 16,
+      "brain_round": 21,
       "level": 2,
       "arena": "turn 113 deg right in place",
       "success": true,
-      "final_error": 4.4,
+      "final_error": 10.5,
       "unit": "deg",
-      "outcome": "heading error 4.4 deg, drift 4.2 mm (pass: < 20 deg and < 6 mm)",
+      "outcome": "heading error 10.5 deg, drift 4.5 mm (pass: < 20 deg and < 6 mm)",
       "seed": 30001,
       "sim_seconds": 3.0,
       "video_seconds": 6.0,
       "playback_speed": 0.5,
-      "rendered_at": "2026-10-01T20:15:14"
+      "rendered_at": "2026-10-01T23:24:37"
     },
     {
       "skill": "goto",
