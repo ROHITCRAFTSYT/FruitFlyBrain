@@ -4,7 +4,7 @@
       "skill": "walk_forward",
       "file": "walk_forward.mp4",
       "poster": "walk_forward.png",
-      "brain_round": 34,
+      "brain_round": 39,
       "level": 2,
       "arena": "goal flag 11.2 mm away, ahead",
       "success": true,
@@ -15,7 +15,7 @@
       "sim_seconds": 5.0,
       "video_seconds": 5.0,
       "playback_speed": 1.0,
-      "rendered_at": "2026-10-01T20:14:00"
+      "rendered_at": "2026-10-03T15:33:14"
     },
     {
       "skill": "turn",
@@ -38,7 +38,7 @@
       "skill": "goto",
       "file": "goto.mp4",
       "poster": "goto.png",
-      "brain_round": 38,
+      "brain_round": 40,
       "level": 2,
       "arena": "goal flag 15.9 mm away, 26 deg to the left",
       "success": true,
@@ -49,24 +49,24 @@
       "sim_seconds": 7.0,
       "video_seconds": 7.0,
       "playback_speed": 1.0,
-      "rendered_at": "2026-10-03T14:33:20"
+      "rendered_at": "2026-10-03T15:34:08"
     },
     {
       "skill": "odor_seek",
       "file": "odor_seek.mp4",
       "poster": "odor_seek.png",
-      "brain_round": 62,
+      "brain_round": 66,
       "level": 2,
       "arena": "food 13.1 mm away, 53 deg to the left",
       "success": true,
-      "final_error": 0.23,
+      "final_error": 0.22,
       "unit": "mm",
-      "outcome": "ended 0.23 mm from the food (pass: < 1.5 mm and standing still)",
+      "outcome": "ended 0.22 mm from the food (pass: < 1.5 mm and standing still)",
       "seed": 30003,
       "sim_seconds": 8.0,
       "video_seconds": 8.0,
       "playback_speed": 1.0,
-      "rendered_at": "2026-09-30T22:43:38"
+      "rendered_at": "2026-10-03T15:35:12"
     },
     {
       "skill": "odor_avoid",
