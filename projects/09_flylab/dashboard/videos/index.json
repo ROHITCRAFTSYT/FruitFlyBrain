@@ -21,18 +21,18 @@
       "skill": "turn",
       "file": "turn.mp4",
       "poster": "turn.png",
-      "brain_round": 21,
+      "brain_round": 37,
       "level": 2,
       "arena": "turn 113 deg right in place",
       "success": true,
-      "final_error": 10.5,
+      "final_error": 1.4,
       "unit": "deg",
-      "outcome": "heading error 10.5 deg, drift 4.5 mm (pass: < 20 deg and < 6 mm)",
+      "outcome": "heading error 1.4 deg, drift 5.1 mm (pass: < 20 deg and < 6 mm)",
       "seed": 30001,
       "sim_seconds": 3.0,
       "video_seconds": 6.0,
       "playback_speed": 0.5,
-      "rendered_at": "2026-10-01T23:24:37"
+      "rendered_at": "2026-10-03T13:32:46"
     },
     {
       "skill": "goto",
@@ -106,18 +106,18 @@
       "skill": "light_avoid",
       "file": "light_avoid.mp4",
       "poster": "light_avoid.png",
-      "brain_round": 24,
+      "brain_round": 45,
       "level": 2,
       "arena": "lamp 6.2 mm away, 130 deg to the left",
       "success": true,
-      "final_error": 34.9,
+      "final_error": 30.7,
       "unit": "mm gained",
-      "outcome": "moved +34.9 mm further away (pass: > 6 mm, never approaching)",
+      "outcome": "moved +30.7 mm further away (pass: > 6 mm, never approaching)",
       "seed": 30006,
       "sim_seconds": 4.0,
       "video_seconds": 8.0,
       "playback_speed": 0.5,
-      "rendered_at": "2026-09-30T20:37:24"
+      "rendered_at": "2026-10-03T13:33:23"
     }
   ]
 }
