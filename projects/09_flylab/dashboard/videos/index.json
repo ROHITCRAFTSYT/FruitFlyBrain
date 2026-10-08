@@ -4,18 +4,18 @@
       "skill": "walk_forward",
       "file": "walk_forward.mp4",
       "poster": "walk_forward.png",
-      "brain_round": 44,
+      "brain_round": 59,
       "level": 2,
       "arena": "goal flag 11.2 mm away, ahead",
       "success": true,
-      "final_error": 0.2,
+      "final_error": 0.22,
       "unit": "mm",
-      "outcome": "ended 0.20 mm from the goal flag (pass: < 1.5 mm and standing still)",
+      "outcome": "ended 0.22 mm from the goal flag (pass: < 1.5 mm and standing still)",
       "seed": 30000,
       "sim_seconds": 5.0,
       "video_seconds": 5.0,
       "playback_speed": 1.0,
-      "rendered_at": "2026-10-04T15:06:38"
+      "rendered_at": "2026-10-07T22:46:25"
     },
     {
       "skill": "turn",
