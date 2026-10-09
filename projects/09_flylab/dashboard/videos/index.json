@@ -72,18 +72,18 @@
       "skill": "odor_avoid",
       "file": "odor_avoid.mp4",
       "poster": "odor_avoid.png",
-      "brain_round": 288,
+      "brain_round": 352,
       "level": 2,
       "arena": "repellent 4.5 mm away, 33 deg to the left",
       "success": true,
-      "final_error": 54.3,
+      "final_error": 53.3,
       "unit": "mm gained",
-      "outcome": "moved +54.3 mm further away (pass: > 6 mm, never approaching)",
+      "outcome": "moved +53.3 mm further away (pass: > 6 mm, never approaching)",
       "seed": 30004,
       "sim_seconds": 4.0,
       "video_seconds": 8.0,
       "playback_speed": 0.5,
-      "rendered_at": "2026-10-05T11:25:52"
+      "rendered_at": "2026-10-09T21:12:27"
     },
     {
       "skill": "light_seek",
