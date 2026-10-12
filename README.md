@@ -94,7 +94,7 @@ automatically as training improves it.*
 | Skill brain | Rounds | Physics validation | **Held-out physics test** (95% CI) | Fresh-arena check | Status |
 |---|---:|---:|---:|---:|---|
 | Walk forward | 92 | 100% of 24 | **100% of 32** (89%–100%) | 100% of 16 (2026-10-12) | ✅ optimal |
-| Turn in place | 340 | 100% of 24 | **97% of 32** (84%–99%) | 100% of 16 (2026-10-12) | ✅ optimal |
+| Turn in place | 352 | 100% of 24 | **97% of 32** (84%–99%) | 100% of 16 (2026-10-12) | ✅ optimal |
 | Go to a location | 86 | 100% of 24 | **100% of 32** (89%–100%) | 100% of 16 (2026-10-12) | ✅ optimal |
 | Find food by smell | 94 | 100% of 24 | **100% of 32** (89%–100%) | 100% of 16 (2026-10-12) | ✅ optimal |
 | Escape a bad smell | 422 | 100% of 24 | **97% of 32** (84%–99%) | 94% of 16 (2026-10-12) | ✅ optimal |
