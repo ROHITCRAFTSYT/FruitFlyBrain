@@ -129,6 +129,18 @@
     s = s.replace(/\u0000(\d+)\u0000/g, function (_, i) { return '<code>' + codes[+i] + '</code>'; });
     return s;
   }
+  // Drop HTML comments such as the README's <!-- markers -->. Scans until no
+  // "<!--" is left, so leftover pieces can't reassemble into a new comment
+  // opener (a single regex pass can: "<!<!---->--" -> "<!--"). An unterminated
+  // "<!--" drops the rest of the text. inlineMd() still HTML-escapes the result.
+  function stripComments(s) {
+    var i, j;
+    while ((i = s.indexOf('<!--')) !== -1) {
+      j = s.indexOf('-->', i + 4);
+      s = j === -1 ? s.slice(0, i) : s.slice(0, i) + s.slice(j + 3);
+    }
+    return s;
+  }
   function splitRow(line) {
     var t = line.trim().replace(/^\|/, '').replace(/\|$/, '').replace(/\\\|/g, '\u0001');
     return t.split('|').map(function (c) { return c.replace(/\u0001/g, '|').trim(); });
@@ -147,7 +159,7 @@
     var html = '', para = [], tableLines = [];
     function flushPara() {
       if (!para.length) return;
-      var txt = para.join(' ').replace(/<!--[\s\S]*?-->/g, '').trim();
+      var txt = stripComments(para.join(' ')).trim();
       if (txt) html += '<p class="eng-extra">' + inlineMd(txt) + '</p>';
       para = [];
     }
