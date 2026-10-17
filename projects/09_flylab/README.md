@@ -193,7 +193,7 @@ Once installed, the whole loop runs by itself on the training PC:
 | `supervise.py` | always | trains skills below optimal first; spare CPU **polishes** optimal brains; commits and pushes every hour |
 | `train_brains.py --polish` | when a core is free | keeps training an optimal brain; the result is kept **only if it is still optimal afterwards** (a candidate that scores higher on validation but falls under 90% on the held-out test is rolled back), so a deployed brain never regresses |
 | `daily.py` | once a day | `recheck.py` re-runs every optimal brain on **16 new random physics arenas** (a new set every day) → [`training/CHECKS.md`](training/CHECKS.md); rewrites the README status table; regenerates the GIFs and brain films |
-| `autostart.py` | at sign-in + hourly | a Startup-folder entry and the hourly Windows task *FlyLab supervisor watchdog* restart the supervisor if it isn't running (idempotent: never a second copy) |
+| `autostart.py` | at sign-in + hourly | a small **guardian** runs the supervisor and restarts it within ~15 s whenever it exits, logging the exit code to `training/logs/autostart.log`; a Startup-folder entry and the hourly Windows task *FlyLab supervisor watchdog* keep the guardian itself running (idempotent: never a second copy) |
 | daily AI review | every evening, ~21:15 (Claude app) | reads the logs and checks; if a skill is stuck or a fresh check drops under 80%, it diagnoses the cause, fixes it, documents it in the engineering log above and pushes |
 
 ```bash
@@ -265,7 +265,7 @@ Flags: `--no-video` (physics but no rendering, faster), `--no-physics`
 | `render.py` | composite video + HUD, trajectory maps, learning charts |
 | `supervise.py` | runs the trainers unattended: priorities, polishing, daily job, hourly git push |
 | `daily.py` / `recheck.py` | daily fresh-arena physics checks, README status table, GIF refresh |
-| `autostart.py` | sign-in entry + hourly watchdog task that keep the supervisor running |
+| `autostart.py` | guardian (restarts the supervisor in seconds, logs exit codes) + sign-in entry and hourly watchdog task that keep the guardian running |
 | `render_brains.py` | re-films brains that changed, for the dashboard and README |
 | `reflexes.py` | innate reflexes used to seed brains that can't get started (chemotaxis, escape) |
 | `playground/` | in-browser brain playground (see above) |
