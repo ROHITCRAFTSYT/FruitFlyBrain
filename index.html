@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FruitFlyBrain</title>
+<meta name="description" content="Fruit-fly connectome analysis, machine learning on its wiring, and FlyLab: seven trained brains driving a physics-simulated fly.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cellipse cx='16' cy='18' rx='6' ry='9' fill='%23a0662a'/%3E%3Cellipse cx='9' cy='12' rx='6' ry='3' fill='%2399c2ee' opacity='.8'/%3E%3Cellipse cx='23' cy='12' rx='6' ry='3' fill='%2399c2ee' opacity='.8'/%3E%3Ccircle cx='16' cy='8' r='3.5' fill='%23c0392b'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="projects/09_flylab/dashboard/style.css">
+<style>
+  .hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; align-items: center; margin-top: 8px; }
+  @media (max-width: 820px) { .hero { grid-template-columns: minmax(0, 1fr); } }
+  .hero img { width: 100%; border-radius: 10px; border: 1px solid var(--border); display: block; }
+  .go { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin: 26px 0 8px; }
+  .go a { display: block; text-decoration: none; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .go a:hover { border-color: var(--muted); }
+  .go strong { display: block; font-size: 1.02rem; margin-bottom: 4px; }
+  .go span { color: var(--text-2); font-size: .88rem; }
+  table.status { border-collapse: collapse; width: 100%; font-size: .9rem; }
+  table.status th, table.status td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--border); }
+  table.status .num { text-align: right; font-variant-numeric: tabular-nums; }
+  ul.projects { padding-left: 18px; color: var(--text-2); }
+  ul.projects li { margin: 4px 0; }
+  footer.wrap { margin-top: 40px; padding-bottom: 32px; }
+</style>
+</head>
+<body>
+<header class="wrap">
+  <p class="eyebrow">FruitFlyBrain</p>
+  <h1>The fruit-fly brain, from connectome to a fly you can test</h1>
+  <div class="hero">
+    <div>
+      <p class="lede">
+        Nine projects built on public <em>Drosophila</em> brain data: network analysis of a 3.5-million-synapse
+        connectome, machine-learning models trained on its wiring, and <strong>FlyLab</strong>, where seven small
+        brains drive NeuroMechFly v2, a fly body built from a micro-CT scan, in MuJoCo physics.
+      </p>
+      <p class="note" id="summary">Loading the current state of the brains…</p>
+    </div>
+    <img src="docs/gifs/flylab_odor_seek.gif" alt="The physics fly finding food using only its two antennae" width="480" height="240">
+  </div>
+</header>
+
+<main class="wrap">
+  <nav class="go">
+    <a href="projects/09_flylab/playground/"><strong>Brain playground</strong>
+      <span>Run a trained brain in your browser. Move the fly and its target, silence neurons or an antenna, download the weights.</span></a>
+    <a href="projects/09_flylab/dashboard/"><strong>Training dashboard</strong>
+      <span>Every training round, physics validation and held-out test, updated as the brains keep training.</span></a>
+    <a href="https://github.com/ROHITCRAFTSYT/FruitFlyBrain"><strong>Source on GitHub</strong>
+      <span>All nine projects, the data provenance, the training logs and the engineering notes.</span></a>
+  </nav>
+
+  <h2>The seven FlyLab brains</h2>
+  <p class="note">Read live from the training records. "Held-out test" means physics arenas never used to pick a
+    brain; "optimal" means it passed all three mastery levels and at least 90% of those arenas.</p>
+  <div class="table-scroll">
+    <table class="status">
+      <thead><tr><th scope="col">Skill</th><th scope="col">Senses it uses</th><th scope="col" class="num">Held-out physics test</th><th scope="col">Status</th></tr></thead>
+      <tbody id="brains"><tr><td colspan="4" class="dim">loading…</td></tr></tbody>
+    </table>
+  </div>
+
+  <h2>The other projects</h2>
+  <ul class="projects">
+    <li><a href="https://github.com/ROHITCRAFTSYT/FruitFlyBrain/tree/main/projects/01_connectome_graph_analysis">01 Connectome graph analysis</a>: hubs and degree structure of the Janelia hemibrain (21,739 neurons).</li>
+    <li><a href="https://github.com/ROHITCRAFTSYT/FruitFlyBrain/tree/main/projects/02_neurotransmitter_atlas">02 Neurotransmitter atlas</a>: a census of all 139,248 neurons in the FlyWire whole-brain dataset.</li>
+    <li><a href="https://github.com/ROHITCRAFTSYT/FruitFlyBrain/tree/main/projects/03_shortest_path_circuits">03 Pathway tracer</a>: strongest synaptic routes, e.g. Kenyon cells to mushroom-body output neurons.</li>
+    <li><a href="https://github.com/ROHITCRAFTSYT/FruitFlyBrain/tree/main/projects/04_connectome_neural_network">04 Connectome-constrained dynamics</a>: activity spreading through the real central-complex wiring.</li>
+    <li><a href="https://github.com/ROHITCRAFTSYT/FruitFlyBrain/tree/main/projects/05_navis_3d_viewer">05 3-D neuron viewer</a>: interactive neuron morphologies with NAVis.</li>
+    <li><a href="https://github.com/ROHITCRAFTSYT/FruitFlyBrain/tree/main/projects/06_celltype_classifier">06 Cell-type classifier</a>: 88% accuracy over 53 cell-type families from wiring alone.</li>
+    <li><a href="https://github.com/ROHITCRAFTSYT/FruitFlyBrain/tree/main/projects/07_neuron_embeddings">07 Unsupervised cell typing</a>: neuron embeddings that recover cell types without labels (NMI 0.59).</li>
+    <li><a href="https://github.com/ROHITCRAFTSYT/FruitFlyBrain/tree/main/projects/08_synapse_link_prediction">08 Synapse link prediction</a>: 0.971 ROC-AUC on held-out connections.</li>
+  </ul>
+</main>
+
+<footer class="wrap">
+  <p class="dim">Data: Janelia FlyEM hemibrain v1.2 and FlyWire FAFB (CC BY 4.0). Fly body: NeuroMechFly v2
+    (Wang-Chen et al., Nature Methods 2024), EPFL, Apache-2.0. Code: MIT, Rohit (ROHITCRAFTSYT).</p>
+</footer>
+
+<script>
+  // Same rules as the training code and the dashboard (train_brains.py LEVELS / TEST_OPTIMAL).
+  var SKILLS = [
+    ["walk_forward", "Walk forward", "goal compass"], ["turn", "Turn in place", "goal compass"],
+    ["goto", "Go to a location", "goal compass"], ["odor_seek", "Find food by smell", "two antennae"],
+    ["odor_avoid", "Escape a bad smell", "two antennae"], ["light_seek", "Walk toward light", "two eyes"],
+    ["light_avoid", "Hide from light", "two eyes"]
+  ];
+  var LEVELS = [{ val: 6, thr: 1 }, { val: 12, thr: 1 }, { val: 24, thr: 0.95 }];
+  function judge(st) {
+    var level = typeof st.level === "number" ? st.level : 0, L = LEVELS[Math.min(level, 2)];
+    var b = st.best || {}, t = st.test || {}, n = b.n || (b.physics_errors || []).length;
+    var passed = b.physics_val >= L.thr - 1e-9 && b.surrogate >= 0.95 && n >= L.val;
+    if (level >= 2 && passed && t.physics_test >= 0.9 - 1e-9) return ["optimal", "optimal"];
+    return [passed ? "passed" : "training", "level " + (level + 1) + " of 3"];
+  }
+  Promise.all(SKILLS.map(function (s) {
+    return fetch("projects/09_flylab/training/" + s[0] + "/status.json", { cache: "no-cache" })
+      .then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+  })).then(function (all) {
+    var rows = "", optimal = 0, shown = 0;
+    all.forEach(function (st, i) {
+      var s = SKILLS[i];
+      if (!st) { rows += "<tr><td>" + s[1] + "</td><td>" + s[2] + '</td><td class="num dim">–</td><td class="dim">no record</td></tr>'; return; }
+      shown++;
+      var t = st.test || {}, n = t.n || (t.physics_errors || []).length, k = Math.round((t.physics_test || 0) * n);
+      var j = judge(st); if (j[0] === "optimal") optimal++;
+      rows += "<tr><td>" + s[1] + "</td><td>" + s[2] + '</td><td class="num">' + k + "/" + n + "</td>" +
+        '<td><span class="badge ' + j[0] + '">' + j[1] + "</span></td></tr>";
+    });
+    document.getElementById("brains").innerHTML = rows;
+    document.getElementById("summary").textContent = shown
+      ? optimal + " of " + SKILLS.length + " brains are currently optimal. Training keeps running on its own; results are published hourly while the training PC is on."
+      : "Could not load the training records.";
+  });
+</script>
+</body>
+</html>
