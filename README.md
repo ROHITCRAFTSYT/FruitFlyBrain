@@ -89,17 +89,17 @@ automatically as training improves it.*
 </p>
 
 <!-- BRAINS:START -->
-**Status on 2026-10-20** (rewritten daily by `daily.py`; the [dashboard](https://rohitcraftsyt.github.io/FruitFlyBrain/projects/09_flylab/dashboard/) is live):
+**Status on 2026-10-21** (rewritten daily by `daily.py`; the [dashboard](https://rohitcraftsyt.github.io/FruitFlyBrain/projects/09_flylab/dashboard/) is live):
 
 | Skill brain | Rounds | Physics validation | **Held-out physics test** (95% CI) | Fresh-arena check | Status |
 |---|---:|---:|---:|---:|---|
-| Walk forward | 121 | 100% of 24 | **100% of 32** (89%–100%) | 100% of 16 (2026-10-20) | ✅ optimal |
-| Turn in place | 540 | 100% of 24 | **97% of 32** (84%–99%) | 100% of 16 (2026-10-20) | ✅ optimal |
-| Go to a location | 114 | 100% of 24 | **100% of 32** (89%–100%) | 100% of 16 (2026-10-20) | ✅ optimal |
-| Find food by smell | 108 | 100% of 24 | **100% of 32** (89%–100%) | 100% of 16 (2026-10-20) | ✅ optimal |
-| Escape a bad smell | 531 | 100% of 24 | **97% of 32** (84%–99%) | 100% of 16 (2026-10-20) | ✅ optimal |
-| Walk toward light | 299 | 100% of 24 | **100% of 32** (89%–100%) | 100% of 16 (2026-10-20) | ✅ optimal |
-| Hide from light | 265 | 100% of 24 | **100% of 32** (89%–100%) | 100% of 16 (2026-10-20) | ✅ optimal |
+| Walk forward | 152 | 100% of 24 | **100% of 32** (89%–100%) | 100% of 16 (2026-10-21) | ✅ optimal |
+| Turn in place | 593 | 100% of 24 | **97% of 32** (84%–99%) | 94% of 16 (2026-10-21) | ✅ optimal |
+| Go to a location | 138 | 100% of 24 | **100% of 32** (89%–100%) | 100% of 16 (2026-10-21) | ✅ optimal |
+| Find food by smell | 128 | 100% of 24 | **100% of 32** (89%–100%) | 100% of 16 (2026-10-21) | ✅ optimal |
+| Escape a bad smell | 569 | 100% of 24 | **97% of 32** (84%–99%) | 100% of 16 (2026-10-21) | ✅ optimal |
+| Walk toward light | 322 | 100% of 24 | **100% of 32** (89%–100%) | 100% of 16 (2026-10-21) | ✅ optimal |
+| Hide from light | 302 | 100% of 24 | **100% of 32** (89%–100%) | 100% of 16 (2026-10-21) | ✅ optimal |
 <!-- BRAINS:END -->
 
 **How it got here** (full [engineering log](projects/09_flylab/README.md#making-skills-survive-the-jump-to-physics-engineering-log)):
