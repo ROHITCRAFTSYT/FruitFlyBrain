@@ -46,6 +46,8 @@ def ps(script):
 def pids_matching(pattern):
     r = ps("Get-CimInstance Win32_Process -Filter \"Name='python.exe' or Name='pythonw.exe'\" | "
            f"Where-Object {{ $_.CommandLine -like '*{pattern}*' }} | ForEach-Object {{ $_.ProcessId }}")
+    if r.returncode or r.stderr.strip():   # a failed query must not read as "nothing running"
+        log(f"process query for {pattern!r} failed (code {r.returncode}): {r.stderr.strip()[:200]}")
     return [int(x) for x in r.stdout.split() if x.strip().isdigit()]
 
 
@@ -64,7 +66,7 @@ def guard():
     supervisor: if one is already running elsewhere it waits for it to end."""
     others = [p for p in guardian_pids() if p != os.getpid()]
     if len(others) > 2:            # a guardian is a venv launcher + interpreter pair
-        print(f"another guardian is running ({others}); exiting")
+        log(f"guardian {os.getpid()} found another guardian running ({others}); exiting")
         return
     log(f"guardian started (pid {os.getpid()})")
     flags = subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW
