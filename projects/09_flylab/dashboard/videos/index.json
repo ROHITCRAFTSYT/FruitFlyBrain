@@ -55,18 +55,18 @@
       "skill": "odor_seek",
       "file": "odor_seek.mp4",
       "poster": "odor_seek.png",
-      "brain_round": 134,
+      "brain_round": 137,
       "level": 2,
       "arena": "food 13.1 mm away, 53 deg to the left",
       "success": true,
-      "final_error": 0.12,
+      "final_error": 0.03,
       "unit": "mm",
-      "outcome": "ended 0.12 mm from the food (pass: < 1.5 mm and standing still)",
+      "outcome": "ended 0.03 mm from the food (pass: < 1.5 mm and standing still)",
       "seed": 30003,
       "sim_seconds": 8.0,
       "video_seconds": 8.0,
       "playback_speed": 1.0,
-      "rendered_at": "2026-10-24T22:14:57"
+      "rendered_at": "2026-10-24T23:15:15"
     },
     {
       "skill": "odor_avoid",
