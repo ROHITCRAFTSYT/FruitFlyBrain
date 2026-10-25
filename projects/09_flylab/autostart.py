@@ -44,10 +44,12 @@ def ps(script):
 
 
 def pids_matching(pattern):
-    r = ps("Get-CimInstance Win32_Process -Filter \"Name='python.exe' or Name='pythonw.exe'\" | "
-           f"Where-Object {{ $_.CommandLine -like '*{pattern}*' }} | ForEach-Object {{ $_.ProcessId }}")
-    if r.returncode or r.stderr.strip():   # a failed query must not read as "nothing running"
-        log(f"process query for {pattern!r} failed (code {r.returncode}): {r.stderr.strip()[:200]}")
+    for attempt in (1, 2):   # a failed query must not read as "nothing running": retry once
+        r = ps("Get-CimInstance Win32_Process -Filter \"Name='python.exe' or Name='pythonw.exe'\" | "
+               f"Where-Object {{ $_.CommandLine -like '*{pattern}*' }} | ForEach-Object {{ $_.ProcessId }}")
+        if not (r.returncode or r.stderr.strip()):
+            break
+        log(f"process query for {pattern!r} failed (code {r.returncode}, attempt {attempt}): {r.stderr.strip()[:200]}")
     return [int(x) for x in r.stdout.split() if x.strip().isdigit()]
 
 
