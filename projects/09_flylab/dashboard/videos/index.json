@@ -38,18 +38,18 @@
       "skill": "goto",
       "file": "goto.mp4",
       "poster": "goto.png",
-      "brain_round": 80,
+      "brain_round": 163,
       "level": 2,
       "arena": "goal flag 15.9 mm away, 26 deg to the left",
       "success": true,
-      "final_error": 0.38,
+      "final_error": 0.27,
       "unit": "mm",
-      "outcome": "ended 0.38 mm from the goal flag (pass: < 1.5 mm and standing still)",
+      "outcome": "ended 0.27 mm from the goal flag (pass: < 1.5 mm and standing still)",
       "seed": 30002,
       "sim_seconds": 7.0,
       "video_seconds": 7.0,
       "playback_speed": 1.0,
-      "rendered_at": "2026-10-11T16:44:00"
+      "rendered_at": "2026-10-25T14:05:14"
     },
     {
       "skill": "odor_seek",
