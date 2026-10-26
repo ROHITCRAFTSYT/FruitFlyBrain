@@ -84,7 +84,8 @@ def guard():
         mins = (time.time() - t0) / 60
         code_u = code & 0xFFFFFFFF
         why = {1: "killed (TerminateProcess / taskkill /F)", 0xC000013A: "console closed or Ctrl+Break",
-               0xC0000005: "access violation (native crash)", 0xC0000409: "stack buffer overrun (native crash)"}
+               0xC0000005: "access violation (native crash)", 0xC0000409: "stack buffer overrun (native crash)",
+               0x40010004: "terminated by Windows shutdown / sign-out"}
         log(f"supervisor exited after {mins:.0f} min with code {code} (0x{code_u:08X}): "
             f"{why.get(code_u, 'see code')}")
         quick_deaths = quick_deaths + 1 if mins < 5 else 0
@@ -99,13 +100,18 @@ def ensure():
         return
     cmd = f'"{PYW}" "{Path(__file__)}" guard'
     # 0x208 = CREATE_NEW_PROCESS_GROUP | DETACHED_PROCESS: no console, immune to Ctrl+C elsewhere
-    r = ps(f"$s = New-CimInstance -ClassName Win32_ProcessStartup -ClientOnly -Property @{{CreateFlags=[uint32]0x208}}; "
-           f"$r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments "
-           f"@{{CommandLine='{cmd}'; CurrentDirectory='{HERE}'; ProcessStartupInformation=$s}}; "
-           f"\"$($r.ReturnValue) $($r.ProcessId)\"")
-    code, _, pid = r.stdout.strip().partition(" ")
-    log(f"guardian was not running; started it (WMI return {code}, pid {pid})" if code == "0"
-        else f"FAILED to start guardian: {r.stdout.strip()} {r.stderr.strip()}")
+    for attempt in (1, 2):   # WMI can be unready just after boot: retry once (a spare guardian steps aside)
+        r = ps(f"$s = New-CimInstance -ClassName Win32_ProcessStartup -ClientOnly -Property @{{CreateFlags=[uint32]0x208}}; "
+               f"$r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments "
+               f"@{{CommandLine='{cmd}'; CurrentDirectory='{HERE}'; ProcessStartupInformation=$s}}; "
+               f"\"$($r.ReturnValue) $($r.ProcessId)\"")
+        code, _, pid = r.stdout.strip().partition(" ")
+        if code == "0":
+            log(f"guardian was not running; started it (WMI return {code}, pid {pid})")
+            return
+        log(f"FAILED to start guardian (powershell code {r.returncode}, attempt {attempt}): "
+            f"{r.stdout.strip()} {r.stderr.strip()[:200]}")
+        time.sleep(30)
 
 
 def install():
