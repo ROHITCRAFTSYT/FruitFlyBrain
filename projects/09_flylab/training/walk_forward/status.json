@@ -1,9 +1,9 @@
 {
   "task": "walk_forward",
-  "round": 209,
-  "generations": 20900,
-  "physics_runs": 5030,
-  "stale": 1,
+  "round": 210,
+  "generations": 21000,
+  "physics_runs": 5054,
+  "stale": 2,
   "best": {
     "round": 116,
     "physics_val": 1.0,
