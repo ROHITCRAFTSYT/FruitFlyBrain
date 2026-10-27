@@ -54,11 +54,12 @@ def pids_matching(pattern):
 
 
 def supervisor_pids():
-    return pids_matching("supervise.py")
+    # anchored to this folder: other projects on this PC run their own supervise.py / autostart.py guard
+    return pids_matching(str(HERE / "supervise.py"))
 
 
 def guardian_pids():
-    return pids_matching("autostart.py*guard")   # the command line quotes the path: autostart.py" guard
+    return pids_matching(f"{HERE / 'autostart.py'}*guard")   # the command line quotes the path: autostart.py" guard
 
 
 def guard():
@@ -78,7 +79,7 @@ def guard():
             time.sleep(60)         # one is already running (started elsewhere); don't duplicate
             continue
         t0 = time.time()
-        proc = subprocess.Popen([str(PY), "-u", "supervise.py", "--keep-awake"], cwd=HERE, creationflags=flags)
+        proc = subprocess.Popen([str(PY), "-u", str(HERE / "supervise.py"), "--keep-awake"], cwd=HERE, creationflags=flags)
         log(f"guardian started supervisor (pid {proc.pid})")
         code = proc.wait()
         mins = (time.time() - t0) / 60
