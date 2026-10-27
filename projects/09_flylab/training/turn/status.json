@@ -1,9 +1,9 @@
 {
   "task": "turn",
-  "round": 722,
-  "generations": 72200,
-  "physics_runs": 17574,
-  "stale": 2,
+  "round": 723,
+  "generations": 72300,
+  "physics_runs": 17598,
+  "stale": 3,
   "best": {
     "round": 80,
     "physics_val": 1.0,
