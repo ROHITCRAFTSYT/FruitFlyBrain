@@ -1,9 +1,9 @@
 {
   "task": "odor_avoid",
-  "round": 708,
-  "generations": 70800,
-  "physics_runs": 14298,
-  "stale": 3,
+  "round": 711,
+  "generations": 71100,
+  "physics_runs": 14370,
+  "stale": 2,
   "best": {
     "round": 373,
     "physics_val": 1.0,
