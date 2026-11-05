@@ -81,7 +81,7 @@ def sense(
         goal_on, goal_x, goal_y     navigation goal (a point to reach / face)
     `prev` is the previous step's raw intensities (for temporal change), or None.
 
-    Returns (features [..., 9], raw) where raw holds intensities for the next call.
+    Returns (features [..., N_SENSES=10], state) where state holds the integrator for the next call.
     """
     (lx, ly), (rx, ry) = antenna_positions(x, y, th)
 

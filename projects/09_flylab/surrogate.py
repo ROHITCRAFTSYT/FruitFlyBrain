@@ -23,7 +23,8 @@ DT = 0.05                     # brain / surrogate control step (20 Hz)
 DR_GAIN = 0.2                 # domain randomization: +/-20% speed and turn gain
 DR_VEER = 0.25                # rad/s constant veer while walking (std)
 # Gait wobble measured on the physics fly at full stride (physics.py / README):
-# thorax position oscillates ~0.15 mm rms and yaw ~3.6 deg per step. It is
+# thorax position oscillates ~0.15 mm rms and yaw ~4 deg rms (the realism audit
+# re-measured 0.18 mm / 4.4 deg at drive 1.2; DR_YAW_WOBBLE uses 4 deg). It is
 # oscillatory (not a random walk), so it perturbs what the fly SENSES each step
 # without accumulating into its path.
 DR_JITTER_MM = 0.15

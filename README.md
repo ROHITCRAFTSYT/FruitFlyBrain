@@ -67,8 +67,8 @@ walking controller.
   [autonomous operation](projects/09_flylab/README.md#autonomous-operation-no-one-needs-to-touch-it).
 - **Realistic senses.** Odor is sampled at the model's **measured aristae**
   (0.52 mm ahead of the thorax, 0.38 mm apart), there are two compound eyes,
-  and the gait wobble (0.15 mm and 3.6° per step), measured in physics, is fed
-  back into training.
+  and the gait wobble (0.15 mm and 4° rms; re-measured at 0.18 mm and 4.4°),
+  measured in physics, is fed back into training.
 
 ### The seven brains in physics
 *Each film is the current best brain on an arena it has never seen, rendered

@@ -7,7 +7,10 @@ commands.
 The two outputs are the LEFT and RIGHT descending drives -- the same interface
 real flies use, where descending neurons carry brain commands to the ventral
 nerve cord that patterns the legs. Positive drive = that side's legs step
-forward, larger = faster; negative = that side steps backward (spot turns).
+forward, larger = faster; negative = that side's CPGs run backward. (FlyGym's
+turning controller only flips the CPG frequency sign, and the tripod coupling
+resists opposite stepping, so this body cannot pivot on the spot: its tightest
+turn is a ~1.5-1.7 mm radius circle. See docs/realism-backlog.md.)
 
 Why one brain per skill? An earlier version shared ONE network across all
 skills (with rehearsal and a "sleep" consolidation step). Measured in physics,

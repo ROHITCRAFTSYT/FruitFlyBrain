@@ -110,6 +110,11 @@ class PhysicsFly:
             wb.add_geom(type=GEOM.mjGEOM_CYLINDER, size=[4.0, 0.01, 0], pos=[x, y, 0.02],
                         rgba=[0.55, 0.1, 0.6, 0.25], contype=0, conaffinity=0)
         elif kind == "light":     # a glowing lamp on a thin post
+            # Drawn for visibility, NOT where the brain senses it: world.py puts the
+            # lamp LIGHT_HEIGHT_MM = 1.0 above the eyes (measured eye height 1.17 mm,
+            # so ~2.2 mm above ground), while this sphere is centred at 4.0 mm. The
+            # markers have no collision, so this affects the films only.
+            # See docs/realism-backlog.md.
             wb.add_geom(type=GEOM.mjGEOM_SPHERE, size=[1.1, 0, 0], pos=[x, y, 4.0],
                         rgba=[1.0, 0.95, 0.4, 1], contype=0, conaffinity=0)
             wb.add_geom(type=GEOM.mjGEOM_CYLINDER, size=[0.12, 2.0, 0], pos=[x, y, 2.0],
