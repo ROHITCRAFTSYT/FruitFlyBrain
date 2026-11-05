@@ -1,0 +1,64 @@
+name: CI
+
+# Lint + tests for projects 01-09. Everything runs on tiny fixtures in tests/;
+# no dataset download, no FlyGym/MuJoCo (FlyLab's physics bridge is stubbed).
+# Actions are pinned to full commit SHAs (tag in the trailing comment).
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      # the training PC pushes these hourly; they cannot break lint or tests
+      - "projects/09_flylab/training/**"
+      - "projects/09_flylab/dashboard/videos/**"
+      - "docs/gifs/**"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
+        with:
+          python-version: "3.12"
+      - name: Install ruff (pinned)
+        run: python -m pip install --quiet "ruff==0.17.3"
+      - name: ruff check
+        run: ruff check --output-format=github .
+
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - name: Install pinned dependencies
+        run: python -m pip install --quiet -r requirements-dev.txt
+      - name: pytest
+        env:
+          MPLBACKEND: Agg
+        run: python -m pytest --cov=projects --cov=download_datasets --cov-report=term-missing:skip-covered
+      - name: Package metadata builds
+        run: python -m pip install --quiet --no-deps . && python -m pip show fruitflybrain

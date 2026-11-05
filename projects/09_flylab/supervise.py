@@ -54,24 +54,24 @@ DAILY_STAMP = LOGS / "daily_last.txt"   # date of the last daily.py run
 POLISH_MAX_ROUNDS = 1_000_000
 
 
-def _now():
+def _now() -> str:
     return datetime.now().isoformat(timespec="seconds")
 
 
-def say(msg):
+def say(msg: str) -> None:
     LOGS.mkdir(parents=True, exist_ok=True)
     with open(LOGS / "supervisor.log", "a", encoding="utf-8") as fh:
         fh.write(f"{_now()}  {msg}\n")
 
 
-def status(task):
+def status(task: str) -> dict:
     p = TRAIN_DIR / task / "status.json"
     return json.loads(p.read_text()) if p.exists() else {"round": 0, "level": 0, "best": None}
 
 
 
 
-def foreign_jobs():
+def foreign_jobs() -> set[str]:
     """Skills (and "daily") whose train_brains.py / daily.py is already running but
     isn't ours -- e.g. workers orphaned when an earlier supervisor was killed.
     Starting a second trainer on such a skill would interleave two processes
@@ -91,21 +91,21 @@ def foreign_jobs():
     return jobs
 
 
-def daily_due():
+def daily_due() -> bool:
     return not DAILY_STAMP.exists() or DAILY_STAMP.read_text().strip() != date.today().isoformat()
 
 
-def weakness(task):
+def weakness(task: str) -> tuple:
     st = status(task)
     b = st.get("best") or {}
     return (st.get("level", 0), b.get("physics_val", -1), b.get("physics_reward", -9))
 
 
-def git(*args):
+def git(*args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(["git", *args], cwd=REPO, capture_output=True, text=True)
 
 
-def render_videos(proc):
+def render_videos(proc: subprocess.Popen | None) -> subprocess.Popen | None:
     """Re-film brains that changed since their last video (real MuJoCo episodes,
     low priority, in the background); the next push publishes them."""
     if proc is not None and proc.poll() is None:
@@ -115,7 +115,7 @@ def render_videos(proc):
                             cwd=HERE, stdout=log, stderr=subprocess.STDOUT, creationflags=DETACH)
 
 
-def push_progress():
+def push_progress() -> None:
     rel = HERE.relative_to(REPO).as_posix()
     git("add", f"{rel}/training", f"{rel}/state/brains", f"{rel}/dashboard/videos", "README.md", "docs/gifs")
     if not git("diff", "--cached", "--quiet").returncode:
@@ -133,7 +133,7 @@ def push_progress():
     say(f"git commit/push: {'ok' if not c.returncode and not p.returncode else (c.stderr + p.stderr).strip()}")
 
 
-def main():
+def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--workers", type=int, default=2, help="skills trained at the same time (CPU cores)")
     ap.add_argument("--slice", type=float, default=1.0, help="hours per training turn before yielding")
@@ -165,7 +165,8 @@ def main():
                 continue
             del running[task]
             crashes[task] = 0 if code == 0 else crashes[task] + 1
-            say(f"[{task}] trainer exited with code {code}" + (f" (crash {crashes[task]}/{MAX_CRASHES})" if code else ""))
+            say(f"[{task}] trainer exited with code {code}"
+                + (f" (crash {crashes[task]}/{MAX_CRASHES})" if code else ""))
 
         # once a day: fresh-arena checks, README table, GIFs (takes one worker slot)
         if daily is not None and daily.poll() is not None:
@@ -194,11 +195,14 @@ def main():
             say(f"daily.py started (pid {daily.pid})")
 
         # skills below optimal first; spare slots polish optimal brains (never exits)
-        ok = lambda t: crashes[t] < MAX_CRASHES and t not in running and t not in foreign
-        pending = [(t, False) for t in T.TASKS if ok(t) and not optimal(status(t)) and status(t)["round"] < args.max_rounds]
+        # (used right away in this iteration, so binding the loop variables late is intended)
+        ok = lambda t: crashes[t] < MAX_CRASHES and t not in running and t not in foreign  # noqa: B023
+        pending = [(t, False) for t in T.TASKS
+                   if ok(t) and not optimal(status(t)) and status(t)["round"] < args.max_rounds]
         polish = [(t, True) for t in T.TASKS if ok(t) and optimal(status(t))]
         free = max(0, args.workers - len(running) - (daily is not None) - len(foreign))
-        queue = sorted(pending, key=lambda x: (turns[x[0]], weakness(x[0]))) +             sorted(polish, key=lambda x: (turns[x[0]], weakness(x[0])))
+        queue = (sorted(pending, key=lambda x: (turns[x[0]], weakness(x[0])))
+                 + sorted(polish, key=lambda x: (turns[x[0]], weakness(x[0]))))
         for task, pol in queue[:free]:
             log = open(LOGS / f"{task}.log", "a", encoding="utf-8")
             cmd = [sys.executable, "-u", "train_brains.py", "--skills", task, "--hours", str(args.slice),

@@ -13,6 +13,8 @@ so a good brain is polished rather than shaken.
 """
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import time
 
 import numpy as np
@@ -27,14 +29,14 @@ WEIGHT_DECAY = 0.005
 SCENARIOS = 16
 
 
-def _ranks(f):
+def _ranks(f: np.ndarray) -> np.ndarray:
     """Centered rank transform -> robust to reward scale."""
     r = np.empty_like(f)
     r[np.argsort(f)] = np.arange(len(f))
     return r / (len(f) - 1) - 0.5
 
 
-def evaluate(body, theta, task, n=48, seed=123):
+def evaluate(body: SG.Body, theta: np.ndarray, task: str, n: int = 48, seed: int = 123) -> tuple[float, float]:
     """Success rate and mean reward of one brain on n random (noisy) arenas."""
     rng = np.random.default_rng(seed)
     scen = T.sample(task, n, rng)
@@ -43,15 +45,23 @@ def evaluate(body, theta, task, n=48, seed=123):
     return float(ok.mean()), float(rew.mean())
 
 
-def annealed(success: float):
+def annealed(success: float) -> tuple[float, float]:
     """Exploration noise and learning rate for a brain at this success level."""
     k = 1.0 - 0.7 * np.clip(success, 0, 1)          # 1.0 -> 0.3 as success -> 100%
     return SIGMA * k, LR * k
 
 
-def train(theta: np.ndarray, body: SG.Body, task: str, generations: int,
-          seed: int | None = None, sigma: float = SIGMA, lr: float = LR,
-          progress=None, eval_every: int = 10):
+def train(
+    theta: np.ndarray,
+    body: SG.Body,
+    task: str,
+    generations: int,
+    seed: int | None = None,
+    sigma: float = SIGMA,
+    lr: float = LR,
+    progress: Callable[..., None] | None = None,
+    eval_every: int = 10,
+) -> tuple[np.ndarray, dict]:
     """Train one skill brain. Returns (new_theta, log)."""
     rng = np.random.default_rng(seed if seed is not None else int(time.time()))
     theta = np.asarray(theta, dtype=float).copy()

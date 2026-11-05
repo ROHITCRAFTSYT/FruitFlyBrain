@@ -33,6 +33,11 @@ Examples
 """
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import navis
+
 import argparse
 import os
 import sys
@@ -53,14 +58,14 @@ TOP_HUBS_CSV = ROOT / "projects" / "01_connectome_graph_analysis" / "outputs" / 
 FALLBACK_HEMIBRAIN_BODYIDS = [425790257, 5813105172, 612371421]
 
 
-def hub_bodyids(n: int) -> list[int]:
+def hub_bodyids(n: int, csv_path: Path = TOP_HUBS_CSV) -> list[int]:
     """Read the top-N hub bodyIds from Project 1's output, else use the fallback."""
-    if not TOP_HUBS_CSV.exists():
-        print(f"  (Project 1 output not found at {TOP_HUBS_CSV};\n"
+    if not csv_path.exists():
+        print(f"  (Project 1 output not found at {csv_path};\n"
               f"   run analyze.py first for live hubs - using built-in fallback.)")
         return FALLBACK_HEMIBRAIN_BODYIDS[:n]
     import pandas as pd
-    hubs = pd.read_csv(TOP_HUBS_CSV)
+    hubs = pd.read_csv(csv_path)
     ids = hubs["bodyId"].head(n).astype("int64").tolist()
     labels = ", ".join(f"{b} ({t})" for b, t in zip(ids, hubs["type"].head(n)))
     print(f"  top {n} hubs from Project 1: {labels}")
@@ -69,14 +74,14 @@ PALETTE = ["#e15759", "#4e79a7", "#59a14f", "#f28e2b", "#b07aa1",
            "#76b7b2", "#edc948", "#ff9da7"]
 
 
-def load_example(n: int):
+def load_example(n: int) -> navis.NeuronList:
     import navis
     nl = navis.example_neurons(n)
     # NAVis may return a single neuron; always work with a NeuronList.
     return navis.NeuronList(nl)
 
 
-def load_neuprint(bodyids: list[int]):
+def load_neuprint(bodyids: list[int]) -> navis.NeuronList:
     import navis
     import navis.interfaces.neuprint as neu
 
@@ -109,8 +114,8 @@ def main() -> None:
 
     try:
         import navis  # noqa: F401
-    except ImportError:
-        raise SystemExit("NAVis is not installed. Run:  pip install navis plotly\n")
+    except ImportError as err:
+        raise SystemExit("NAVis is not installed. Run:  pip install navis plotly\n") from err
     import navis
 
     print(f"NAVis {navis.__version__} - loading neurons...")

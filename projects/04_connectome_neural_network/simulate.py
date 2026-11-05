@@ -47,6 +47,36 @@ def select_subset(neurons: pd.DataFrame, prefixes: tuple[str, ...]) -> pd.DataFr
     return neurons.loc[m, ["bodyId", "type"]].copy()
 
 
+def weight_matrix(edges: pd.DataFrame, body_ids: list[int]) -> np.ndarray:
+    """W[i, j] = synapses from neuron j onto neuron i (float32), for neurons in `body_ids` order."""
+    idx = {b: i for i, b in enumerate(body_ids)}
+    n = len(body_ids)
+    W = np.zeros((n, n), dtype=np.float32)
+    pre = edges["bodyId_pre"].map(idx).to_numpy()
+    post = edges["bodyId_post"].map(idx).to_numpy()
+    np.add.at(W, (post, pre), edges["weight"].to_numpy(dtype=np.float32))
+    return W
+
+
+def normalize_by_max_row(W: np.ndarray) -> np.ndarray:
+    """Divide by the largest row sum, so the spectral radius is at most 1."""
+    max_row = float(W.sum(axis=1).max()) or 1.0
+    return W / max_row
+
+
+def run_dynamics(Wn: np.ndarray, stim: np.ndarray, steps: int, stim_steps: int,
+                 gain: float) -> np.ndarray:
+    """Iterate x(t+1) = ReLU(gain * Wn @ x(t) + stim * [t < stim_steps]); returns x for every step."""
+    n = len(stim)
+    x = np.zeros(n, dtype=np.float32)
+    hist = np.zeros((steps, n), dtype=np.float32)
+    for t in range(steps):
+        drive = stim if t < stim_steps else 0.0
+        x = np.maximum(0.0, gain * (Wn @ x) + drive)
+        hist[t] = x
+    return hist
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -92,14 +122,10 @@ def main() -> None:
     print(f"  subnetwork: {n:,} neurons, {len(e):,} internal connections")
 
     # ---- build weight matrix W[i, j] = synapses from j -> i -----------------
-    W = np.zeros((n, n), dtype=np.float32)
-    pre = e["bodyId_pre"].map(idx).to_numpy()
-    post = e["bodyId_post"].map(idx).to_numpy()
-    np.add.at(W, (post, pre), e["weight"].to_numpy(dtype=np.float32))
+    W = weight_matrix(e, body_ids)
 
     # Normalise so the spectral radius is bounded by 1 (max row sum), then apply gain.
-    max_row = float(W.sum(axis=1).max()) or 1.0
-    Wn = W / max_row
+    Wn = normalize_by_max_row(W)
 
     # ---- stimulus: pulse into the seed population ---------------------------
     seed_pref = args.seed_type.upper()
@@ -116,12 +142,7 @@ def main() -> None:
     stim[seed_idx] = 1.0
 
     # ---- run the dynamics ---------------------------------------------------
-    x = np.zeros(n, dtype=np.float32)
-    hist = np.zeros((args.steps, n), dtype=np.float32)
-    for t in range(args.steps):
-        drive = stim if t < args.stim_steps else 0.0
-        x = np.maximum(0.0, args.gain * (Wn @ x) + drive)
-        hist[t] = x
+    hist = run_dynamics(Wn, stim, args.steps, args.stim_steps, args.gain)
 
     # ---- per-type mean response over time -----------------------------------
     type_arr = np.array([str(types[b]) for b in body_ids])

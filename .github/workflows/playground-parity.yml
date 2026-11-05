@@ -36,7 +36,7 @@ jobs:
         with:
           node-version: "22"
       - name: Install numpy
-        run: python -m pip install --quiet "numpy>=2,<3"
+        run: python -m pip install --quiet "numpy==2.5.4"
       - name: Record Python reference runs
         working-directory: projects/09_flylab/playground/tools
         run: |

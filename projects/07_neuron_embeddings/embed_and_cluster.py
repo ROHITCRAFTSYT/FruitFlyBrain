@@ -48,18 +48,31 @@ TSNE_SAMPLE = 4000    # neurons drawn for the 2-D visualization
 RANDOM_STATE = 42
 
 
+def adjacency_matrix(conn: pd.DataFrame, ids: np.ndarray) -> sparse.csr_matrix:
+    """Sparse synapse-count matrix A[i, j] = weight of ids[i] -> ids[j] (duplicates summed)."""
+    idx = {b: i for i, b in enumerate(ids)}
+    n = len(ids)
+    pre = conn["bodyId_pre"].map(idx).to_numpy()
+    post = conn["bodyId_post"].map(idx).to_numpy()
+    w = conn["weight"].to_numpy(dtype=np.float64)
+    return sparse.coo_matrix((w, (pre, post)), shape=(n, n)).tocsr()
+
+
+def cluster_purity(clusters: np.ndarray, families: np.ndarray) -> float:
+    """Mean over clusters of the fraction of members that belong to the cluster's dominant family."""
+    dfc = pd.DataFrame({"cluster": clusters, "family": families})
+    purity = (dfc.groupby("cluster")["family"]
+              .agg(lambda s: s.value_counts().iloc[0] / len(s)))
+    return float(purity.mean())
+
+
 def main() -> None:
     print("Loading hemibrain...")
     conn, neurons = load_hemibrain()
 
     ids = neurons["bodyId"].to_numpy()
-    idx = {b: i for i, b in enumerate(ids)}
     n = len(ids)
-
-    pre = conn["bodyId_pre"].map(idx).to_numpy()
-    post = conn["bodyId_post"].map(idx).to_numpy()
-    w = conn["weight"].to_numpy(dtype=np.float64)
-    A = sparse.coo_matrix((w, (pre, post)), shape=(n, n)).tocsr()
+    A = adjacency_matrix(conn, ids)
     print(f"  adjacency: {n:,} neurons, {A.nnz:,} nonzero synaptic links")
 
     # ---- embed: SVD of row-normalized output and input profiles -------------
@@ -85,10 +98,7 @@ def main() -> None:
     nmi = normalized_mutual_info_score(fam[labelled], clusters[labelled])
 
     # cluster purity: for each cluster, fraction that is its dominant family
-    dfc = pd.DataFrame({"cluster": clusters[labelled], "family": fam[labelled]})
-    purity = (dfc.groupby("cluster")["family"]
-              .agg(lambda s: s.value_counts().iloc[0] / len(s)))
-    mean_purity = float(purity.mean())
+    mean_purity = cluster_purity(clusters[labelled], fam[labelled])
 
     metrics = {"embedding_dim": 2 * EMB_DIM, "n_clusters": n_clusters,
                "labelled_neurons": int(labelled.sum()),

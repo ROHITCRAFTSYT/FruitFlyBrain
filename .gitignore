@@ -34,3 +34,12 @@ Thumbs.db
 # local tool config
 .claude/
 projects/09_flylab/playground/tools/reference.json
+
+# packaging build artifacts
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml

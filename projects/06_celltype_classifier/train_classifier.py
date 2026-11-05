@@ -46,7 +46,13 @@ MIN_MEMBERS = 40   # a family needs this many neurons to be a target class
 RANDOM_STATE = 42
 
 
-def partner_fraction_matrix(conn, neurons, self_col, partner_col, vocab):
+def partner_fraction_matrix(
+    conn: pd.DataFrame,
+    neurons: pd.DataFrame,
+    self_col: str,
+    partner_col: str,
+    vocab: list[str],
+) -> pd.DataFrame:
     """Rows = neurons (self_col), cols = partner family fractions of synapse weight."""
     fam = neurons.set_index("bodyId")["fam_feat"]
     df = conn[[self_col, partner_col, "weight"]].copy()
@@ -58,12 +64,18 @@ def partner_fraction_matrix(conn, neurons, self_col, partner_col, vocab):
     return agg.div(totals, axis=0)
 
 
+def target_families(families: pd.Series, min_members: int = MIN_MEMBERS) -> list[str]:
+    """Families with at least `min_members` neurons (never "other"), most numerous first."""
+    fam_counts = families.value_counts()
+    return [f for f in fam_counts.index if f != "other" and fam_counts[f] >= min_members]
+
+
 def main() -> None:
     print("Loading hemibrain + building cell-type families...")
     conn, neurons = load_hemibrain()
 
     fam_counts = neurons["family"].value_counts()
-    kept = [f for f in fam_counts.index if f != "other" and fam_counts[f] >= MIN_MEMBERS]
+    kept = target_families(neurons["family"])
     vocab = kept + ["other"]
     neurons["fam_feat"] = neurons["family"].where(neurons["family"].isin(kept), "other")
     print(f"  {len(kept)} target families (>= {MIN_MEMBERS} neurons each), "

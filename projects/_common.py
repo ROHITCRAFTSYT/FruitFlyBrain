@@ -6,6 +6,11 @@ can be run from anywhere with `python <project>/<script>.py`.
 """
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import pandas as pd
+
 from pathlib import Path
 
 # projects/_common.py -> projects/ -> FruitFlyBrain/
@@ -69,7 +74,7 @@ def type_family(name: object) -> str:
     return m.group(0).upper() if m else "other"
 
 
-def load_hemibrain():
+def load_hemibrain() -> tuple[pd.DataFrame, pd.DataFrame]:
     """Return (connections_df, neurons_df) with a 'family' column on neurons."""
     import pandas as pd
     require(HEMIBRAIN_CONNECTIONS)

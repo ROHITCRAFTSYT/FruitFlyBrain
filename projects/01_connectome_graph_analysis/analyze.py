@@ -35,20 +35,17 @@ OUT = outdir(__file__)
 BACKBONE_MIN_WEIGHT = 10  # keep connections of >=10 synapses for the graph backbone
 
 
-def main() -> None:
-    require(HEMIBRAIN_CONNECTIONS)
-    require(HEMIBRAIN_NEURONS)
+def graph_density(n_nodes: int, n_edges: int) -> float:
+    """Directed-graph density: edges / possible ordered pairs (no self-loops)."""
+    return n_edges / (n_nodes * (n_nodes - 1))
 
-    print("Loading hemibrain connectivity (3.5M edges)...")
-    conn = pd.read_csv(HEMIBRAIN_CONNECTIONS)          # bodyId_pre, bodyId_post, weight
-    neurons = pd.read_csv(HEMIBRAIN_NEURONS)           # bodyId, type, instance
 
-    n_neurons = neurons["bodyId"].nunique()
-    n_edges = len(conn)
-    total_synapses = int(conn["weight"].sum())
-    density = n_edges / (n_neurons * (n_neurons - 1))
+def degree_table(conn: pd.DataFrame, neurons: pd.DataFrame) -> pd.DataFrame:
+    """Per-neuron in/out degree and synaptic strength, annotated with type/instance.
 
-    # ---- degree & strength via pandas groupby (cheap) -----------------------
+    `conn` has columns bodyId_pre, bodyId_post, weight; `neurons` has bodyId,
+    type, instance. Neurons with no edges in one direction get 0 there.
+    """
     out_deg = conn.groupby("bodyId_pre").size().rename("out_degree")
     in_deg = conn.groupby("bodyId_post").size().rename("in_degree")
     out_str = conn.groupby("bodyId_pre")["weight"].sum().rename("out_strength")
@@ -61,17 +58,39 @@ def main() -> None:
     )
     stats["total_degree"] = stats["out_degree"] + stats["in_degree"]
     stats["total_strength"] = stats["out_strength"] + stats["in_strength"]
-    stats = stats.merge(
+    return stats.merge(
         neurons.set_index("bodyId")[["type", "instance"]],
         left_index=True,
         right_index=True,
         how="left",
     )
 
-    # ---- reciprocity: fraction of connected pairs that are bidirectional ----
+
+def edge_reciprocity(conn: pd.DataFrame) -> float:
+    """Fraction of directed edges (a -> b) whose reverse edge (b -> a) also exists."""
     fwd = set(map(tuple, conn[["bodyId_pre", "bodyId_post"]].to_numpy()))
     recip_edges = sum(1 for a, b in fwd if (b, a) in fwd)
-    reciprocity = recip_edges / n_edges
+    return recip_edges / len(conn)
+
+
+def main() -> None:
+    require(HEMIBRAIN_CONNECTIONS)
+    require(HEMIBRAIN_NEURONS)
+
+    print("Loading hemibrain connectivity (3.5M edges)...")
+    conn = pd.read_csv(HEMIBRAIN_CONNECTIONS)          # bodyId_pre, bodyId_post, weight
+    neurons = pd.read_csv(HEMIBRAIN_NEURONS)           # bodyId, type, instance
+
+    n_neurons = neurons["bodyId"].nunique()
+    n_edges = len(conn)
+    total_synapses = int(conn["weight"].sum())
+    density = graph_density(n_neurons, n_edges)
+
+    # ---- degree & strength via pandas groupby (cheap) -----------------------
+    stats = degree_table(conn, neurons)
+
+    # ---- reciprocity: fraction of edges whose reverse edge also exists ------
+    reciprocity = edge_reciprocity(conn)
 
     print("\n===== Hemibrain connectome summary =====")
     print(f"  neurons (traced)      : {n_neurons:,}")
@@ -87,7 +106,7 @@ def main() -> None:
     top_hubs.index.name = "bodyId"
     top_hubs.to_csv(OUT / "top_hubs.csv")
     stats.to_csv(OUT / "neuron_degree_table.csv")
-    print(f"\nTop 5 hub neurons by total synaptic strength:")
+    print("\nTop 5 hub neurons by total synaptic strength:")
     for bid, r in top_hubs.head(5).iterrows():
         print(f"  {bid}  {str(r['type']):>10}  strength={int(r['total_strength']):,}")
 

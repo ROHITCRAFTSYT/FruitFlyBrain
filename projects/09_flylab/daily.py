@@ -28,18 +28,18 @@ import tasks as T
 from train_brains import LEVELS, TRAIN_DIR, is_optimal, wilson
 
 
-def status(task):
+def status(task: str) -> dict | None:
     p = TRAIN_DIR / task / "status.json"
     return json.loads(p.read_text()) if p.exists() else None
 
 
-def last_check(task):
+def last_check(task: str) -> dict | None:
     p = TRAIN_DIR / task / "checks.jsonl"
     rows = [json.loads(l) for l in p.read_text(encoding="utf-8").splitlines() if l.strip()] if p.exists() else []
     return rows[-1] if rows else None
 
 
-def brain_table():
+def brain_table() -> tuple[str, int]:
     rows, n_opt = [], 0
     for task in T.TASKS:
         st = status(task)
@@ -57,12 +57,13 @@ def brain_table():
                     f"**{t.get('physics_test', 0):.0%} of {nt}** ({lo:.0%}–{hi:.0%}) | {fresh} | {state} |")
     head = [f"**Status on {date.today().isoformat()}** (rewritten daily by `daily.py`; the "
             "[dashboard](https://rohitcraftsyt.github.io/FruitFlyBrain/projects/09_flylab/dashboard/) is live):", "",
-            "| Skill brain | Rounds | Physics validation | **Held-out physics test** (95% CI) | Fresh-arena check | Status |",
+            "| Skill brain | Rounds | Physics validation | **Held-out physics test** (95% CI) "
+            "| Fresh-arena check | Status |",
             "|---|---:|---:|---:|---:|---|"]
     return "\n".join(head + rows), n_opt
 
 
-def update_readme():
+def update_readme() -> None:
     readme = REPO / "README.md"
     text = readme.read_text(encoding="utf-8")
     table, n_opt = brain_table()
@@ -75,7 +76,7 @@ def update_readme():
           f"{'updated' if k2 else 'marker not found'} ({n_opt}/{len(T.TASKS)})", flush=True)
 
 
-def main():
+def main() -> None:
     print("== fresh-arena checks ==", flush=True)
     sys.argv = [sys.argv[0]]
     recheck.main()

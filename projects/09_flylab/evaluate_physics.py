@@ -23,14 +23,14 @@ import tasks as T
 HERE = Path(__file__).resolve().parent
 
 
-def random_deploy_scenario(task, rng):
+def random_deploy_scenario(task: str, rng: np.random.Generator) -> T.Scenario:
     """A random arena, re-expressed with the fly starting at the origin facing +x
     (the physics fly always spawns there)."""
     s = T.sample(task, 1, rng)
     th0 = float(s.th0[0])
     c, si = np.cos(-th0), np.sin(-th0)
 
-    def rot(x, y):
+    def rot(x: np.ndarray | float, y: np.ndarray | float) -> tuple[np.ndarray | float, np.ndarray | float]:
         return c * x - si * y, si * x + c * y
     st = {k: v.copy() for k, v in s.stim.items()}
     for key in ("odor", "light", "goal"):
@@ -43,7 +43,7 @@ def random_deploy_scenario(task, rng):
     return T.Scenario(task, np.zeros(1), np.zeros(1), np.zeros(1), st, extra)
 
 
-def main():
+def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--n", type=int, default=5, help="random arenas per skill")
     ap.add_argument("--weights", default=None,

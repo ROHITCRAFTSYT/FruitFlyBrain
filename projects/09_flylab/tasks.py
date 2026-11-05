@@ -54,7 +54,7 @@ DURATION_S = {
 }
 
 
-def _empty(S):
+def _empty(S: int) -> dict[str, np.ndarray]:
     z = np.zeros(S)
     return {"odor_on": z.copy(), "odor_x": z.copy(), "odor_y": z.copy(),
             "light_on": z.copy(), "light_x": z.copy(), "light_y": z.copy(),
@@ -62,7 +62,7 @@ def _empty(S):
             "goal_heading_only": z.copy()}
 
 
-def _polar(r, a):
+def _polar(r: np.ndarray | float, a: np.ndarray | float) -> tuple[np.ndarray | float, np.ndarray | float]:
     return r * np.cos(a), r * np.sin(a)
 
 
@@ -76,11 +76,11 @@ class Scenario:
     extra: dict = field(default_factory=dict)
 
     @property
-    def n(self):
+    def n(self) -> int:
         return len(self.x0)
 
     @property
-    def duration(self):
+    def duration(self) -> float:
         return DURATION_S[self.task]
 
 
@@ -143,7 +143,7 @@ def sample(task: str, S: int, rng: np.random.Generator, fixed: dict | None = Non
     return Scenario(task, x0, y0, th0, st, extra)
 
 
-def score(scen: Scenario, xs, ys, ths):
+def score(scen: Scenario, xs: np.ndarray, ys: np.ndarray, ths: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """
     xs, ys, ths: arrays [..., S, T+1] (leading dims = population).
     Returns (reward [..., S], success [..., S] bool).
@@ -193,7 +193,7 @@ LIGHT_WORDS = r"(light|sun|lamp|bright|brightness)"
 NUM = r"(-?\d+(?:\.\d+)?)"
 
 
-def parse(cmd: str):
+def parse(cmd: str) -> tuple[str, str | None, dict]:
     """
     Returns one of:
       ("task", task_name, fixed_params)

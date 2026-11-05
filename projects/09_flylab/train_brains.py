@@ -40,6 +40,8 @@ curve (curve.png) and a report (REPORT.md); training/TRAINING.md summarizes all.
 """
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import os
 os.environ.setdefault("OMP_NUM_THREADS", "1")       # 2 trainers can share a 2-core CPU
 os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
@@ -91,7 +93,7 @@ TEST_OPTIMAL = 0.90
 # ---------------------------------------------------------------------------
 # physics evaluation on fixed arenas
 # ---------------------------------------------------------------------------
-def physics_eval(theta, task, n, seed):
+def physics_eval(theta: np.ndarray, task: str, n: int, seed: int) -> tuple[float, float, list]:
     """Run the brain on n fixed random arenas in full physics.
     Returns (success rate, mean reward, per-arena details)."""
     rng = np.random.default_rng(seed)
@@ -105,7 +107,7 @@ def physics_eval(theta, task, n, seed):
     return float(np.mean(oks)), float(np.mean(rews)), details
 
 
-def _error_of(task, scen, traj):
+def _error_of(task: str, scen: T.Scenario, traj: dict) -> float:
     """A human-readable error for one physics run (mm or degrees)."""
     if task == "turn":
         return round(float(np.degrees(abs(T.wrap(traj["th"][-1] - scen.extra["target_heading"][0])))), 1)
@@ -117,11 +119,11 @@ def _error_of(task, scen, traj):
     return round(df, 2)                             # mm from target (want < 2)
 
 
-def val_seed(task):
+def val_seed(task: str) -> int:
     return 10_000 + T.TASKS.index(task)
 
 
-def test_seed(task):
+def test_seed(task: str) -> int:
     return 20_000 + T.TASKS.index(task)
 
 
@@ -129,7 +131,7 @@ def test_seed(task):
 # per-skill state
 # ---------------------------------------------------------------------------
 class SkillRun:
-    def __init__(self, task, brain: B.Brain):
+    def __init__(self, task: str, brain: B.Brain) -> None:
         self.task = task
         self.brain = brain
         self.dir = TRAIN_DIR / task
@@ -142,50 +144,50 @@ class SkillRun:
                         "stale": 0, "best": None, "test": None, "started": _now()})
 
     @property
-    def best_key(self):
+    def best_key(self) -> tuple[float, float, float]:
         b = self.status["best"]
         return (-1.0, -9.0, -1.0) if b is None else (b["physics_val"], b["physics_reward"], b["surrogate"])
 
     @property
-    def level(self):
+    def level(self) -> int:
         return self.status.get("level", 0)
 
     @property
-    def level_met(self):
+    def level_met(self) -> bool:
         return level_met(self.status)
 
     @property
-    def proficient(self):
+    def proficient(self) -> bool:
         """Passed the first level: good enough for FlyLab to just perform the skill."""
         return self.level > 0 or self.level_met
 
     @property
-    def optimal(self):
+    def optimal(self) -> bool:
         return is_optimal(self.status)
 
-    def candidate(self):
+    def candidate(self) -> np.ndarray:
         if self.cand_path.exists():
             return np.load(self.cand_path)
         return self.brain.theta(self.task).copy()
 
-    def save(self):
+    def save(self) -> None:
         _atomic_write(self.status_path, json.dumps(self.status, indent=2))
 
-    def log(self, row):
+    def log(self, row: dict) -> None:
         with open(self.log_path, "a", encoding="utf-8") as fh:
             fh.write(json.dumps(row) + "\n")
 
-    def rows(self):
+    def rows(self) -> list[dict]:
         if not self.log_path.exists():
             return []
         return [json.loads(l) for l in self.log_path.read_text(encoding="utf-8").splitlines() if l.strip()]
 
 
-def _now():
+def _now() -> str:
     return datetime.now().isoformat(timespec="seconds")
 
 
-def _atomic_write(path: Path, text: str):
+def _atomic_write(path: Path, text: str) -> None:
     tmp = path.with_suffix(path.suffix + ".tmp")
     tmp.write_text(text, encoding="utf-8")
     os.replace(tmp, path)
@@ -194,12 +196,12 @@ def _atomic_write(path: Path, text: str):
 # ---------------------------------------------------------------------------
 # one training round for one skill
 # ---------------------------------------------------------------------------
-def level_met(st):
+def level_met(st: dict) -> bool:
     b = st.get("best")
     return bool(b and b["physics_val"] >= LEVELS[st.get("level", 0)][1] and b["surrogate"] >= MASTERED_SUR)
 
 
-def is_optimal(st):
+def is_optimal(st: dict) -> bool:
     t = st.get("test") or {}
     if st.get("task_version", 1) != T.TASK_VERSION[st["task"]]:
         return False                              # scored under outdated rules
@@ -207,7 +209,7 @@ def is_optimal(st):
             and t.get("physics_test", 0) >= TEST_OPTIMAL)
 
 
-def wilson(p, n, z=1.96):
+def wilson(p: float, n: int, z: float = 1.96) -> tuple[float, float]:
     """95% Wilson confidence interval for a success rate p measured on n arenas."""
     if not n:
         return 0.0, 1.0
@@ -216,7 +218,7 @@ def wilson(p, n, z=1.96):
     return max(0.0, c - h), min(1.0, c + h)
 
 
-def rescore_for_new_rules(run: SkillRun, body, n_val, n_test, say):
+def rescore_for_new_rules(run: SkillRun, body: SG.Body, n_val: int, n_test: int, say: Callable[[str], None]) -> None:
     """The task's definition of success changed (tasks.TASK_VERSION): re-score the
     deployed brain under the new rules from level 1 so every number is comparable."""
     st, b = run.status, run.status["best"]
@@ -241,7 +243,7 @@ def rescore_for_new_rules(run: SkillRun, body, n_val, n_test, say):
     run.save()
 
 
-def level_up(run: SkillRun, n_val, n_test, say):
+def level_up(run: SkillRun, n_val: int, n_test: int, say: Callable[[str], None]) -> None:
     """Raise the bar: re-score the champion on the next level's larger arena sets."""
     st, b = run.status, run.status["best"]
     st["level"] = run.level + 1
@@ -259,7 +261,14 @@ def level_up(run: SkillRun, n_val, n_test, say):
         f"{n_val * k} val arenas {pv:.0%} | {n_test * k} test arenas {pt:.0%}")
 
 
-def run_round(run: SkillRun, body, n_val, n_test, say, polish=False):
+def run_round(
+    run: SkillRun,
+    body: SG.Body,
+    n_val: int,
+    n_test: int,
+    say: Callable[[str], None],
+    polish: bool = False,
+) -> None:
     st = run.status
     if st.get("task_version", 1) != T.TASK_VERSION[run.task]:
         rescore_for_new_rules(run, body, n_val, n_test, say)
@@ -345,7 +354,7 @@ def run_round(run: SkillRun, body, n_val, n_test, say, polish=False):
         f"(reward {prew:+.2f}){test} | {tag} | {row['seconds']:.0f}s")
 
 
-def _update_flylab_history(run: SkillRun):
+def _update_flylab_history(run: SkillRun) -> None:
     """Let the FlyLab console know how good each brain is."""
     b = run.status["best"]
     if not b:
@@ -364,7 +373,7 @@ def _update_flylab_history(run: SkillRun):
 # ---------------------------------------------------------------------------
 # documentation: per-skill report + summary
 # ---------------------------------------------------------------------------
-def write_skill_report(run: SkillRun):
+def write_skill_report(run: SkillRun) -> None:
     rows = run.rows()
     if not rows:
         return
@@ -414,19 +423,19 @@ def write_skill_report(run: SkillRun):
         note = "new best" if x["improved"] else ("restart from best" if x.get("restarted_from_best") else
                                                  "reseed: fresh weights" if x.get("reseeded") else "")
         test = f"{x['physics_test']:.0%}" if "physics_test" in x else ""
-        lines.append(f"| {x['round']} | {x.get('level', 1)} | {x['generations']} | {x['sigma']:.3f} | {x['surrogate']:.0%} | "
-                     f"{x['physics_val']:.0%} | {x['physics_errors']} | {test} | {note} |")
+        lines.append(f"| {x['round']} | {x.get('level', 1)} | {x['generations']} | {x['sigma']:.3f} | "
+                     f"{x['surrogate']:.0%} | {x['physics_val']:.0%} | {x['physics_errors']} | {test} | {note} |")
     _atomic_write(run.dir / "REPORT.md", "\n".join(lines) + "\n")
 
 
-def _status_text(st):
+def _status_text(st: dict) -> str:
     if is_optimal(st):
         return "**optimal**"
     lvl = st.get("level", 0)
     return f"level {lvl + 1}/{len(LEVELS)}" + (" (passed)" if level_met(st) else "")
 
 
-def write_summary():
+def write_summary() -> None:
     TRAIN_DIR.mkdir(exist_ok=True)
     rows = []
     for task in T.TASKS:
@@ -435,10 +444,14 @@ def write_summary():
             continue
         st = json.loads(p.read_text())
         b, t = st.get("best") or {}, st.get("test") or {}
+        test_txt = "-"
+        if t:
+            lo, hi = 100 * np.array(wilson(t["physics_test"], t["n"]))
+            test_txt = f"{100 * t['physics_test']:.0f}% of {int(t['n'])} (CI {lo:.0f}-{hi:.0f}%)"
         rows.append(f"| [{T.PRETTY[task]}]({task}/REPORT.md) | {st['round']} | {st['generations']} | "
                     f"{st['physics_runs']} | {b.get('surrogate', 0):.0%} | "
                     f"{b.get('physics_val', 0):.0%} of {b.get('n', 6)} | "
-                    f"{('%.0f%% of %d (CI %.0f-%.0f%%)' % (100 * t['physics_test'], t['n'], *(100 * np.array(wilson(t['physics_test'], t['n']))))) if t else '-'} | "
+                    f"{test_txt} | "
                     f"{_status_text(st)} |")
     text = "\n".join([
         "# FlyLab brains — continuous training log", "",
@@ -457,7 +470,7 @@ def write_summary():
 
 
 # ---------------------------------------------------------------------------
-def main():
+def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--skills", nargs="+", default=T.TASKS, choices=T.TASKS)
     ap.add_argument("--hours", type=float, default=0, help="time budget (0 = until all optimal)")
