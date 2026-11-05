@@ -57,6 +57,25 @@
     <button id="more-events" type="button" hidden>Show more</button>
   </section>
 
+  <section aria-labelledby="repro-h">
+    <h2 id="repro-h">Reproduce these numbers</h2>
+    <p class="note">
+      MuJoCo physics is deterministic, so a score depends only on the brain and the arenas it was tested on.
+      That is why every rate here carries a 95% Wilson interval, and why the held-out test and the daily
+      fresh-arena check use arenas the trainer never selects on. To re-score the current brains on new
+      physics arenas yourself:
+    </p>
+<pre><code>python -m venv .venv-sim
+.venv-sim/bin/pip install -r requirements-sim.txt        # FlyGym 2.1.0, MuJoCo 3.9
+cd projects/09_flylab
+../../.venv-sim/bin/python recheck.py                    # fresh physics arenas per optimal brain
+../../.venv-sim/bin/python realism_checks.py             # re-measure the body the senses rely on</code></pre>
+    <p class="note">
+      What is still simplified compared with a real fly (odor field, eye model, fixed-frequency gait, no pivoting, ...)
+      is ranked in the <a href="https://github.com/ROHITCRAFTSYT/FruitFlyBrain/blob/main/docs/realism-backlog.md">realism backlog</a>.
+    </p>
+  </section>
+
   <section aria-labelledby="eng-h">
     <h2 id="eng-h">Engineering log: making skills survive the jump to physics</h2>
     <div id="englog"><p class="dim">Loading README...</p></div>
@@ -68,11 +87,17 @@
     Source: <a href="https://github.com/ROHITCRAFTSYT/FruitFlyBrain/tree/main/projects/09_flylab">ROHITCRAFTSYT/FruitFlyBrain</a>
     · <a href="https://github.com/ROHITCRAFTSYT/FruitFlyBrain/blob/main/projects/09_flylab/training/TRAINING.md">training/TRAINING.md</a>
     · <a href="https://github.com/ROHITCRAFTSYT/FruitFlyBrain/blob/main/projects/09_flylab/README.md">project README</a>
+    · <a href="https://github.com/ROHITCRAFTSYT/FruitFlyBrain/blob/main/docs/realism-backlog.md">realism backlog</a>
+    · <a href="https://github.com/ROHITCRAFTSYT/FruitFlyBrain/actions/workflows/ci.yml">CI</a>
   </p>
   <p class="dim">The page reloads its data every 5 minutes; the training machine pushes new results about once an hour.</p>
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<!-- chart.js 4.4.1 as published on npm (dist/chart.umd.js). The old chart.umd.min.js URL is not in the
+     package: jsDelivr minified it on the fly, so its bytes could change. The hash below is of the npm file. -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"
+        integrity="sha384-dug+JxfBvklEQdJ4AYuBBAIScUz0bVN73xpy273gcAwHjb3qI0fXmuYNaNfdyYJG"
+        crossorigin="anonymous"></script>
 <script src="app.js"></script>
 </body>
 </html>
