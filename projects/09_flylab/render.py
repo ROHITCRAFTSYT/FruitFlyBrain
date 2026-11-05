@@ -22,7 +22,7 @@ PLAYBACK = 0.5
 FPS = 25
 
 
-def _font(size):
+def _font(size: int) -> ImageFont.ImageFont | ImageFont.FreeTypeFont:
     for f in ("C:/Windows/Fonts/segoeui.ttf", "C:/Windows/Fonts/arial.ttf",
               "/System/Library/Fonts/Helvetica.ttc", "DejaVuSans.ttf"):
         try:
@@ -32,7 +32,19 @@ def _font(size):
     return ImageFont.load_default()
 
 
-def _bar(draw, x, y, w, h, value, lo, hi, color, label, font):
+def _bar(
+    draw: ImageDraw.ImageDraw,
+    x: int,
+    y: int,
+    w: int,
+    h: int,
+    value: float,
+    lo: float,
+    hi: float,
+    color: tuple[int, int, int],
+    label: str,
+    font: ImageFont.ImageFont | ImageFont.FreeTypeFont,
+) -> None:
     draw.rectangle([x, y, x + w, y + h], outline=(90, 90, 90), fill=(30, 30, 30))
     zero = x + w * (0 - lo) / (hi - lo)
     v = x + w * (np.clip(value, lo, hi) - lo) / (hi - lo)
@@ -41,7 +53,7 @@ def _bar(draw, x, y, w, h, value, lo, hi, color, label, font):
     draw.text((x, y - 18), f"{label} {value:+.2f}", font=font, fill=(220, 220, 220))
 
 
-def _sense_text(f):
+def _sense_text(f: np.ndarray) -> str:
     """Human-readable version of the brain's sensory vector (undo feature scaling)."""
     parts = []
     if f[0] > 1e-4:
@@ -55,8 +67,7 @@ def _sense_text(f):
     return ",  ".join(parts) or "-"
 
 
-def make_video(frames: dict, traj: dict, title: str, subtitle: str, verdict: str,
-               ok: bool, path: Path):
+def make_video(frames: dict, traj: dict, title: str, subtitle: str, verdict: str, ok: bool, path: Path) -> Path | None:
     names = list(frames.keys())
     if not names:
         return None
@@ -98,7 +109,7 @@ def make_video(frames: dict, traj: dict, title: str, subtitle: str, verdict: str
     return path
 
 
-def mp4_to_gif(mp4: Path, gif: Path, width=560, fps=10, max_seconds=12):
+def mp4_to_gif(mp4: Path, gif: Path, width: int = 560, fps: int = 10, max_seconds: float = 12) -> Path:
     """Downscaled GIF of a lesson video (for README embedding)."""
     reader = imageio.get_reader(str(mp4))
     src_fps = reader.get_meta_data().get("fps", FPS)
@@ -118,7 +129,7 @@ def mp4_to_gif(mp4: Path, gif: Path, width=560, fps=10, max_seconds=12):
     return gif
 
 
-def plot_trajectory(scen: T.Scenario, traj: dict, pred: tuple | None, title: str, path: Path):
+def plot_trajectory(scen: T.Scenario, traj: dict, pred: tuple | None, title: str, path: Path) -> Path:
     xs, ys = traj["x"], traj["y"]
     pts = [xs, ys]
     if "target" in scen.extra:
@@ -172,7 +183,7 @@ def plot_trajectory(scen: T.Scenario, traj: dict, pred: tuple | None, title: str
     return path
 
 
-def plot_progress(history: dict, path: Path):
+def plot_progress(history: dict, path: Path) -> Path | None:
     lessons = history.get("lessons", [])
     if not lessons:
         return None

@@ -45,6 +45,40 @@ def type_bodyids(neurons: pd.DataFrame, prefix: str) -> list[int]:
     return neurons.loc[m, "bodyId"].tolist()
 
 
+SOURCE, TARGET = "SOURCE", "TARGET"   # virtual super-source / super-sink nodes
+
+
+def build_cost_graph(conn: pd.DataFrame, min_weight: int = BACKBONE_MIN_WEIGHT) -> nx.DiGraph:
+    """Directed graph of connections with >= `min_weight` synapses; edge cost = 1 / weight."""
+    strong = conn[conn["weight"] >= min_weight].copy()
+    strong["cost"] = 1.0 / strong["weight"]  # heavier synapse -> shorter distance
+    return nx.from_pandas_edgelist(
+        strong, "bodyId_pre", "bodyId_post",
+        edge_attr=["weight", "cost"], create_using=nx.DiGraph,
+    )
+
+
+def add_terminals(G: nx.DiGraph, src: set[int], dst: set[int]) -> None:
+    """Join every source neuron to SOURCE and every target neuron to TARGET at zero cost,
+    so a single Dijkstra run finds the best type -> type route."""
+    G.add_node(SOURCE); G.add_node(TARGET)
+    for b in src:
+        if b in G:
+            G.add_edge(SOURCE, b, weight=0, cost=0.0)
+    for b in dst:
+        if b in G:
+            G.add_edge(b, TARGET, weight=0, cost=0.0)
+
+
+def strongest_path(G: nx.DiGraph) -> list[int]:
+    """Neurons on the cheapest SOURCE -> TARGET route (virtual endpoints stripped).
+
+    Raises networkx.NetworkXNoPath if the target is unreachable.
+    """
+    _, path = nx.single_source_dijkstra(G, SOURCE, TARGET, weight="cost")
+    return path[1:-1]
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -71,30 +105,18 @@ def main() -> None:
     print(f"  source '{args.source}': {len(src):,} neurons | "
           f"target '{args.target}': {len(dst):,} neurons")
 
-    strong = conn[conn["weight"] >= BACKBONE_MIN_WEIGHT].copy()
-    strong["cost"] = 1.0 / strong["weight"]  # heavier synapse -> shorter distance
-    G = nx.from_pandas_edgelist(
-        strong, "bodyId_pre", "bodyId_post",
-        edge_attr=["weight", "cost"], create_using=nx.DiGraph,
-    )
+    G = build_cost_graph(conn)
 
     # Virtual super-source / super-sink so one Dijkstra finds the best type->type route.
-    S, T = "SOURCE", "TARGET"
-    G.add_node(S); G.add_node(T)
-    for b in src:
-        if b in G:
-            G.add_edge(S, b, weight=0, cost=0.0)
-    for b in dst:
-        if b in G:
-            G.add_edge(b, T, weight=0, cost=0.0)
+    S, T = SOURCE, TARGET
+    add_terminals(G, src, dst)
 
     try:
-        length, path = nx.single_source_dijkstra(G, S, T, weight="cost")
-    except nx.NetworkXNoPath:
+        core = strongest_path(G)
+    except nx.NetworkXNoPath as err:
         raise SystemExit(f"No pathway found from {args.source} to {args.target} "
-                         f"through connections of >={BACKBONE_MIN_WEIGHT} synapses.")
+                         f"through connections of >={BACKBONE_MIN_WEIGHT} synapses.") from err
 
-    core = path[1:-1]  # strip virtual endpoints
     hops = [(core[i], core[i + 1]) for i in range(len(core) - 1)]
 
     print(f"\n===== Strongest {args.source} -> {args.target} pathway =====")

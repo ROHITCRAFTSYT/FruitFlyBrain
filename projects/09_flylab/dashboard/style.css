@@ -135,3 +135,7 @@ table.eng code, .eng-extra code { font: .82em ui-monospace, Consolas, monospace;
 .eng-extra { color: var(--text-2); font-size: .9rem; max-width: 80ch; }
 
 footer.wrap { margin-top: 48px; padding-top: 16px; padding-bottom: 32px; border-top: 1px solid var(--border); font-size: .88rem; }
+
+/* "Reproduce these numbers" command block */
+pre { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; overflow-x: auto; max-width: 100%; }
+pre code { font: .85em/1.5 ui-monospace, Consolas, monospace; color: var(--text); white-space: pre; }

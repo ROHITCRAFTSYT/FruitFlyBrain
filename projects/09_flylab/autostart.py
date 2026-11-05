@@ -31,19 +31,19 @@ STARTUP = Path(os.environ.get("APPDATA", "")) / "Microsoft/Windows/Start Menu/Pr
 LOG = HERE / "training" / "logs" / "autostart.log"
 
 
-def log(msg):
+def log(msg: str) -> None:
     LOG.parent.mkdir(parents=True, exist_ok=True)
     with open(LOG, "a", encoding="utf-8") as fh:
         fh.write(f"{datetime.now().isoformat(timespec='seconds')}  {msg}\n")
     print(msg)
 
 
-def ps(script):
+def ps(script: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-Command", script],
                           capture_output=True, text=True)
 
 
-def pids_matching(pattern):
+def pids_matching(pattern: str) -> list[int]:
     for attempt in (1, 2):   # a failed query must not read as "nothing running": retry once
         r = ps("Get-CimInstance Win32_Process -Filter \"Name='python.exe' or Name='pythonw.exe'\" | "
                f"Where-Object {{ $_.CommandLine -like '*{pattern}*' }} | ForEach-Object {{ $_.ProcessId }}")
@@ -53,16 +53,16 @@ def pids_matching(pattern):
     return [int(x) for x in r.stdout.split() if x.strip().isdigit()]
 
 
-def supervisor_pids():
+def supervisor_pids() -> list[int]:
     # anchored to this folder: other projects on this PC run their own supervise.py / autostart.py guard
     return pids_matching(str(HERE / "supervise.py"))
 
 
-def guardian_pids():
+def guardian_pids() -> list[int]:
     return pids_matching(f"{HERE / 'autostart.py'}*guard")   # the command line quotes the path: autostart.py" guard
 
 
-def guard():
+def guard() -> None:
     """Run supervise.py as a child and restart it the moment it exits, logging
     the exit code (1 = killed by TerminateProcess/taskkill, 0xC000013A = console
     closed / Ctrl+Break, other 0xC... = native crash). Never starts a second
@@ -79,7 +79,8 @@ def guard():
             time.sleep(60)         # one is already running (started elsewhere); don't duplicate
             continue
         t0 = time.time()
-        proc = subprocess.Popen([str(PY), "-u", str(HERE / "supervise.py"), "--keep-awake"], cwd=HERE, creationflags=flags)
+        proc = subprocess.Popen([str(PY), "-u", str(HERE / "supervise.py"), "--keep-awake"],
+                                cwd=HERE, creationflags=flags)
         log(f"guardian started supervisor (pid {proc.pid})")
         code = proc.wait()
         mins = (time.time() - t0) / 60
@@ -93,7 +94,7 @@ def guard():
         time.sleep(min(15 * 2 ** quick_deaths, 600))   # back off if it keeps dying at once
 
 
-def ensure():
+def ensure() -> None:
     """Make sure the guardian is running (it keeps the supervisor alive)."""
     pids = guardian_pids()
     if pids:
@@ -102,7 +103,8 @@ def ensure():
     cmd = f'"{PYW}" "{Path(__file__)}" guard'
     # 0x208 = CREATE_NEW_PROCESS_GROUP | DETACHED_PROCESS: no console, immune to Ctrl+C elsewhere
     for attempt in (1, 2):   # WMI can be unready just after boot: retry once (a spare guardian steps aside)
-        r = ps(f"$s = New-CimInstance -ClassName Win32_ProcessStartup -ClientOnly -Property @{{CreateFlags=[uint32]0x208}}; "
+        r = ps("$s = New-CimInstance -ClassName Win32_ProcessStartup -ClientOnly "
+               "-Property @{CreateFlags=[uint32]0x208}; "
                f"$r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments "
                f"@{{CommandLine='{cmd}'; CurrentDirectory='{HERE}'; ProcessStartupInformation=$s}}; "
                f"\"$($r.ReturnValue) $($r.ProcessId)\"")
@@ -115,7 +117,7 @@ def ensure():
         time.sleep(30)
 
 
-def install():
+def install() -> None:
     STARTUP.parent.mkdir(parents=True, exist_ok=True)
     STARTUP.write_text(f'@echo off\r\nstart "" "{PYW}" "{Path(__file__)}" ensure\r\n', encoding="ascii")
     r = subprocess.run(["schtasks", "/Create", "/F", "/TN", TASK, "/SC", "HOURLY", "/MO", "1",
@@ -124,20 +126,21 @@ def install():
     log(f"hourly watchdog task '{TASK}': {'ok' if r.returncode == 0 else r.stderr.strip() or r.stdout.strip()}")
 
 
-def remove():
+def remove() -> None:
     if STARTUP.exists():
         STARTUP.unlink()
     r = subprocess.run(["schtasks", "/Delete", "/F", "/TN", TASK], capture_output=True, text=True)
     log(f"removed sign-in entry and watchdog task ({'ok' if r.returncode == 0 else r.stderr.strip()})")
 
 
-def status():
+def status() -> None:
     pids, g = supervisor_pids(), guardian_pids()
     print(f"guardian: {'running, pids ' + str(g) if g else 'NOT running'}")
     print(f"supervisor: {'running, pids ' + str(pids) if pids else 'NOT running'}")
     print(f"sign-in entry: {'installed' if STARTUP.exists() else 'missing'} ({STARTUP})")
     r = subprocess.run(["schtasks", "/Query", "/TN", TASK, "/FO", "LIST"], capture_output=True, text=True)
-    lines = [l for l in r.stdout.splitlines() if l.split(":")[0].strip() in ("Next Run Time", "Status", "Last Run Time")]
+    keys = ("Next Run Time", "Status", "Last Run Time")
+    lines = [l for l in r.stdout.splitlines() if l.split(":")[0].strip() in keys]
     print(f"watchdog task: {'installed; ' + '; '.join(l.strip() for l in lines) if r.returncode == 0 else 'missing'}")
 
 

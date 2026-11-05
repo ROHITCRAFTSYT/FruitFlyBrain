@@ -7,7 +7,10 @@ commands.
 The two outputs are the LEFT and RIGHT descending drives -- the same interface
 real flies use, where descending neurons carry brain commands to the ventral
 nerve cord that patterns the legs. Positive drive = that side's legs step
-forward, larger = faster; negative = that side steps backward (spot turns).
+forward, larger = faster; negative = that side's CPGs run backward. (FlyGym's
+turning controller only flips the CPG frequency sign, and the tripod coupling
+resists opposite stepping, so this body cannot pivot on the spot: its tightest
+turn is a ~1.5-1.7 mm radius circle. See docs/realism-backlog.md.)
 
 Why one brain per skill? An earlier version shared ONE network across all
 skills (with rehearsal and a "sleep" consolidation step). Measured in physics,
@@ -39,7 +42,7 @@ SHAPES = [(N_IN, N_HID), (N_HID,), (N_HID, N_OUT), (N_OUT,)]
 N_PARAMS = int(sum(np.prod(s) for s in SHAPES))
 
 
-def unflatten(theta: np.ndarray):
+def unflatten(theta: np.ndarray) -> list[np.ndarray]:
     """theta [..., N_PARAMS] -> list of arrays with leading batch dims."""
     lead = theta.shape[:-1]
     out, i = [], 0
@@ -50,7 +53,7 @@ def unflatten(theta: np.ndarray):
     return out
 
 
-def task_cue(task: str, shape) -> np.ndarray:
+def task_cue(task: str, shape: tuple[int, ...]) -> np.ndarray:
     cue = np.zeros((*shape, N_TASKS))
     cue[..., TASKS.index(task)] = 1.0
     return cue
@@ -110,26 +113,26 @@ class Brain:
                 self._theta[task] = init_theta(np.random.default_rng(self.seed + TASKS.index(task)))
         return self._theta[task]
 
-    def set_theta(self, task: str, theta: np.ndarray):
+    def set_theta(self, task: str, theta: np.ndarray) -> None:
         self._theta[task] = np.asarray(theta, dtype=float)
 
-    def reload(self, task: str):
+    def reload(self, task: str) -> None:
         """Re-read a brain from disk (e.g. after the continuous trainer improved it)."""
         self._theta.pop(task, None)
         if self.h_path.exists():
             self.history = json.loads(self.h_path.read_text())
 
-    def save(self, task: str | None = None):
+    def save(self, task: str | None = None) -> None:
         for t in ([task] if task else list(self._theta)):
             np.save(self.weights_path(t), self._theta[t])
         self.h_path.write_text(json.dumps(self.history, indent=2))
 
-    def reset(self):
+    def reset(self) -> None:
         for p in self.bdir.glob("*.npy"):
             p.unlink()
         self._theta = {}
         self.history = {"lessons": [], "skills": {}, "generations_total": 0}
         self.h_path.write_text(json.dumps(self.history, indent=2))
 
-    def known_skills(self):
+    def known_skills(self) -> list[str]:
         return [t for t, s in self.history["skills"].items() if s.get("generations", 0) > 0]

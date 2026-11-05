@@ -38,25 +38,50 @@ NT_COLORS = {
 }
 
 
+def census(df: pd.DataFrame) -> dict[str, pd.Series]:
+    """Neuron counts by super-class, neurotransmitter, side and (top 25) cell type.
+
+    Missing values are counted as "unassigned" (super-class) or "unknown"
+    (neurotransmitter, side); neurotransmitter names are lower-cased.
+    """
+    return {
+        "super_class": df["super_class"].fillna("unassigned").value_counts(),
+        "neurotransmitter": df["top_nt"].fillna("unknown").str.lower().value_counts(),
+        "side": df["side"].fillna("unknown").value_counts(),
+        "top_cell_types": df["cell_type"].dropna().value_counts().head(25),
+    }
+
+
+def nt_by_super_class(df: pd.DataFrame) -> pd.DataFrame:
+    """Neuron counts cross-tabulated as super-class (rows) x neurotransmitter (columns)."""
+    return (
+        df.assign(nt=df["top_nt"].fillna("unknown").str.lower(),
+                  scl=df["super_class"].fillna("unassigned"))
+        .pivot_table(index="scl", columns="nt", values="root_id",
+                     aggfunc="count", fill_value=0)
+    )
+
+
 def main() -> None:
     require(FLYWIRE_NEURONS)
     print("Loading FlyWire neuron annotations (~140k neurons)...")
     df = pd.read_csv(FLYWIRE_NEURONS, sep="\t", low_memory=False)
     print(f"  loaded {len(df):,} annotated neurons, {df.shape[1]} attributes")
 
+    counts = census(df)
     # ---- super-class census -------------------------------------------------
-    sc = df["super_class"].fillna("unassigned").value_counts()
+    sc = counts["super_class"]
     sc.to_csv(OUT / "counts_by_super_class.csv", header=["n_neurons"])
 
     # ---- neurotransmitter mix ----------------------------------------------
-    nt = df["top_nt"].fillna("unknown").str.lower().value_counts()
+    nt = counts["neurotransmitter"]
     nt.to_csv(OUT / "counts_by_neurotransmitter.csv", header=["n_neurons"])
 
     # ---- side symmetry ------------------------------------------------------
-    side = df["side"].fillna("unknown").value_counts()
+    side = counts["side"]
 
     # ---- top cell types -----------------------------------------------------
-    top_types = df["cell_type"].dropna().value_counts().head(25)
+    top_types = counts["top_cell_types"]
     top_types.to_csv(OUT / "top_cell_types.csv", header=["n_neurons"])
 
     print("\n===== FlyWire whole-brain census =====")
@@ -97,12 +122,7 @@ def main() -> None:
     plt.close(fig)
 
     # ---- figure 4: NT x super-class heatmap --------------------------------
-    ct = (
-        df.assign(nt=df["top_nt"].fillna("unknown").str.lower(),
-                  scl=df["super_class"].fillna("unassigned"))
-        .pivot_table(index="scl", columns="nt", values="root_id",
-                     aggfunc="count", fill_value=0)
-    )
+    ct = nt_by_super_class(df)
     ct.to_csv(OUT / "nt_by_super_class.csv")
     fig, ax = plt.subplots(figsize=(10, 7))
     im = ax.imshow(ct.values, aspect="auto", cmap="magma")

@@ -23,7 +23,7 @@ CLONE_ARENAS = 512
 CLONE_STEPS = 3000
 
 
-def odor_taxis(feats):
+def odor_taxis(feats: np.ndarray) -> np.ndarray:
     """Steer by the left-right smell difference, slow down as the smell gets
     stronger, stop on the source. feats = world.sense() features."""
     intensity = np.clip(feats[..., 0] / 2.0, 1e-3, 1.0)         # feature is 2 x exp(-r / 10 mm)
@@ -34,7 +34,7 @@ def odor_taxis(feats):
     return np.clip(d, -0.5, 1.2) * (dist > 0.5)[..., None]
 
 
-def odor_escape(feats):
+def odor_escape(feats: np.ndarray) -> np.ndarray:
     """Creep forward steering away from the stronger side; if the smell gets
     stronger anyway, the source is ahead, so walk straight backward (like the
     'moonwalker' descending neurons that make real flies back away). With a
@@ -49,7 +49,7 @@ def odor_escape(feats):
 REFLEXES = {"odor_seek": odor_taxis, "odor_avoid": odor_escape}
 
 
-def _gate(d):
+def _gate(d: np.ndarray) -> np.ndarray:
     return d * np.clip((np.abs(d) - B.DRIVE_GATE_LO) / (B.DRIVE_GATE_HI - B.DRIVE_GATE_LO), 0.0, 1.0)
 
 
@@ -57,7 +57,7 @@ def clone(task: str, body: SG.Body, rng: np.random.Generator) -> np.ndarray:
     """Weights that reproduce the task's reflex (least squares on its own rollouts)."""
     reflex, xs, ys = REFLEXES[task], [], []
 
-    def act(theta, feats, cue):
+    def act(theta: np.ndarray, feats: np.ndarray, cue: np.ndarray) -> np.ndarray:
         d = reflex(feats)
         xs.append(np.concatenate([feats, cue], axis=-1)[0]); ys.append(d[0])
         return _gate(d)

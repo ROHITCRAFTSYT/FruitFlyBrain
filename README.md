@@ -1,5 +1,6 @@
 # 🪰 FruitFlyBrain — the fruit-fly brain, from connectome to a fly you can teach
 
+[![CI](https://github.com/ROHITCRAFTSYT/FruitFlyBrain/actions/workflows/ci.yml/badge.svg)](https://github.com/ROHITCRAFTSYT/FruitFlyBrain/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/Code-MIT-blue.svg)](LICENSE)
 [![Data: CC BY 4.0](https://img.shields.io/badge/Data-CC%20BY%204.0-lightgrey.svg)](datasets/README.md)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB.svg?logo=python&logoColor=white)](https://www.python.org/)
@@ -37,7 +38,7 @@ which lets you drag the fly and its target, silence neurons or an antenna, test 
 - [Quick start](#quick-start)
 - [Connectome analysis projects 01–05](#connectome-analysis)
 - [Machine-learning projects 06–08](#-machine-learning-on-the-connectome)
-- [Results at a glance](#results-at-a-glance)
+- [Results at a glance](#results-at-a-glance) · [Reproducibility](#reproducibility)
 - [Repository layout](#repository-layout) · [Reproducing the animations](#reproducing-the-animations) · [Citations & license](#citations)
 
 ---
@@ -67,8 +68,8 @@ walking controller.
   [autonomous operation](projects/09_flylab/README.md#autonomous-operation-no-one-needs-to-touch-it).
 - **Realistic senses.** Odor is sampled at the model's **measured aristae**
   (0.52 mm ahead of the thorax, 0.38 mm apart), there are two compound eyes,
-  and the gait wobble (0.15 mm and 3.6° per step), measured in physics, is fed
-  back into training.
+  and the gait wobble (0.15 mm and 4° rms; re-measured at 0.18 mm and 4.4°),
+  measured in physics, is fed back into training.
 
 ### The seven brains in physics
 *Each film is the current best brain on an arena it has never seen, rendered
@@ -139,27 +140,44 @@ Provenance, licenses, SHA-256 checksums and citations are in
 
 ## Quick start
 
+Python 3.12 or 3.13. Commands are shown for macOS/Linux; on Windows use
+`.venv\Scripts\python` instead of `.venv/bin/python`.
+
 ```bash
-# from the FruitFlyBrain/ directory: projects 01-08
+# 1. projects 01-08 (from the FruitFlyBrain/ directory)
 python -m venv .venv
-.venv\Scripts\pip install -r requirements.txt        # Windows (macOS/Linux: source .venv/bin/activate)
-python download_datasets.py                          # connectome data, ~275 MB, first run only
-
-.venv\Scripts\python projects\01_connectome_graph_analysis\analyze.py
-.venv\Scripts\python projects\02_neurotransmitter_atlas\atlas.py
-.venv\Scripts\python projects\03_shortest_path_circuits\trace.py
-.venv\Scripts\python projects\04_connectome_neural_network\simulate.py
-.venv\Scripts\python projects\05_navis_3d_viewer\view_neurons.py
-.venv\Scripts\python projects\06_celltype_classifier\train_classifier.py
-.venv\Scripts\python projects\07_neuron_embeddings\embed_and_cluster.py
-.venv\Scripts\python projects\08_synapse_link_prediction\link_prediction.py
-
-# project 09 (FlyLab) has its own environment: see the FlyLab section above
+.venv/bin/pip install -r requirements.txt     # exact, tested versions
+.venv/bin/python download_datasets.py         # ~80 MB (~275 MB on disk), SHA-256 verified, first run only
 ```
 
-Each script prints a summary and writes its figures and tables to its own
-`outputs/` folder. Each project's `README.md` has usage, options and a sanity
-check against known fly neuroscience.
+```bash
+# 2. run any project; each prints a summary and writes to its own outputs/
+.venv/bin/python projects/01_connectome_graph_analysis/analyze.py
+.venv/bin/python projects/02_neurotransmitter_atlas/atlas.py
+.venv/bin/python projects/03_shortest_path_circuits/trace.py
+.venv/bin/python projects/04_connectome_neural_network/simulate.py
+.venv/bin/python projects/05_navis_3d_viewer/view_neurons.py
+.venv/bin/python projects/06_celltype_classifier/train_classifier.py
+.venv/bin/python projects/07_neuron_embeddings/embed_and_cluster.py
+.venv/bin/python projects/08_synapse_link_prediction/link_prediction.py
+```
+
+```bash
+# 3. FlyLab (project 09) has its own environment: FlyGym pins numpy/numba/mujoco
+python -m venv .venv-sim
+.venv-sim/bin/pip install -r requirements-sim.txt
+cd projects/09_flylab && ../../.venv-sim/bin/python flylab.py "find the food"
+```
+
+```bash
+# 4. tests + lint (what CI runs: tiny fixtures, no downloads, no MuJoCo; ~5 s)
+.venv/bin/pip install -r requirements-dev.txt
+.venv/bin/ruff check . && .venv/bin/python -m pytest
+```
+
+Each project's `README.md` has usage, options and a sanity check against known
+fly neuroscience. Projects 06–08 take a few minutes each on a laptop CPU; the
+others take seconds.
 
 ---
 
@@ -230,31 +248,76 @@ sharpening as trees are added.
 
 ## Results at a glance
 
-| # | Project | Headline result |
-|---|---|---|
-| 01 | Connectome graph analysis | heavy-tailed wiring; top hubs **APL** (227k synapses) and **DPM** |
-| 02 | Neurotransmitter atlas | **62%** cholinergic, 18% glutamate, 14% GABA across 139k neurons |
-| 03 | Pathway tracer | strongest **KC → MBON** learning route recovered |
-| 04 | Connectome-constrained dynamics | **ER → EPG** compass pathway emerges from raw wiring |
-| 05 | 3-D morphology | interactive neuron viewer, linked to Project 01's hubs |
-| 06 | Cell-type classifier | **88%** accuracy, 53 classes (baseline 11%) |
-| 07 | Unsupervised cell typing | NMI **0.59** with no labels |
-| 08 | Synapse link prediction | ROC-AUC **0.971** on unseen connections |
-| 09 | FlyLab | **<!-- OPT -->7 of 7<!-- /OPT -->** brains optimal on held-out physics tests; the rest keep training (table above) |
+Every number below is in a committed output file and was re-produced from a
+fresh download on 2026-11-05 with the pinned versions (see
+[Reproducibility](#reproducibility)).
+
+| # | Project | Metric | Result | Reference point | Output file |
+|---|---|---|---|---|---|
+| 01 | Connectome graph analysis | top hubs by synaptic strength | **APL** (227k synapses), **DPM** | the giant mushroom-body neurons | `outputs/top_hubs.csv` |
+| 01 | | edge reciprocity · density | 0.368 · 0.0075 | 21,739 neurons, 3.55 M edges | `outputs/summary.txt` |
+| 02 | Neurotransmitter atlas | cholinergic / glutamate / GABA | **62% / 18% / 14%** of 139,248 neurons | counts of FlyWire's predicted `top_nt` | `outputs/counts_by_neurotransmitter.csv` |
+| 03 | Pathway tracer | strongest KC → MBON route | KCγ-s2 → MBON05 in one hop, plus routes via APL → DPM | the mushroom-body learning circuit | `outputs/paths_KC_to_MBON.csv` |
+| 04 | Connectome-constrained dynamics | peak response to an ER pulse | **EL 0.65, EPG 0.61** (next: PEG 0.08) | the ring → compass pathway | printed by `simulate.py` (defaults) |
+| 05 | 3-D morphology | interactive neuron viewer | linked to Project 01's hubs | — | `outputs/neurons_3d.html` |
+| 06 | Cell-type classifier | accuracy · macro-F1 (53 families) | RF **88.2%** · 0.85, MLP 87.6% · 0.85 | majority class 11.3% | `outputs/metrics.json` |
+| 07 | Unsupervised cell typing | NMI · ARI · purity (53 clusters) | **0.593** · 0.273 · 63% | no labels used to cluster | `outputs/metrics.json` |
+| 08 | Synapse link prediction | ROC-AUC · PR-AUC (held-out edges) | **0.971** · 0.968 | 0.5 for chance | `outputs/metrics.json` |
+| 09 | FlyLab | brains optimal on held-out physics tests | **<!-- OPT -->7 of 7<!-- /OPT -->** | per-skill table above, with 95% CIs | `projects/09_flylab/training/TRAINING.md` |
 
 📄 **[`RESUME.md`](RESUME.md)** has paste-ready, quantified résumé bullets for all of this.
+
+## Reproducibility
+
+- **Data is pinned.** `download_datasets.py` checks every file against the
+  SHA-256 in [`datasets/README.md`](datasets/README.md). The FlyWire annotations
+  come from commit
+  [`17fc577`](https://github.com/flyconnectome/flywire_annotations/commit/17fc57722002e1a7d38cdd0c89ac382bf92718da)
+  of `flyconnectome/flywire_annotations`. Upstream `main` changed on
+  2026-09-29, and fetching it gives 8,846 cell types instead of 8,840.
+- **Software is pinned.** `requirements*.txt` hold exact versions;
+  `pyproject.toml` holds the compatible ranges and the lint/test configuration.
+- **Seeds are fixed.** Projects 06–08 use `RANDOM_STATE = 42`. On
+  2026-11-05 all eight projects were re-run from a fresh download; every
+  committed CSV, JSON and TXT output came out **byte-identical**. Only the PNGs
+  differ, because they depend on the matplotlib version and fonts.
+- **One documented exception.** Project 04's committed `outputs/` come from
+  `simulate.py --seed-type EPG --steps 60`, not from the defaults. The ER-pulse
+  numbers in the table above are from the defaults.
+- **FlyLab.** MuJoCo physics is deterministic: re-running an arena gives the
+  same trajectory to 0.01 mm. The uncertainty in its scores therefore comes from
+  how many arenas were tested, which is why every rate carries a 95% Wilson
+  interval. The brains under `projects/09_flylab/state/brains/` keep improving
+  (pushed hourly by the training PC), so a score belongs to the brain version of
+  the same commit. `recheck.py` re-scores the current brains on fresh physics
+  arenas, and `realism_checks.py` re-measures the body facts the senses rely on.
+- **CI** ([`ci.yml`](.github/workflows/ci.yml)) runs ruff and 80 pytest tests
+  on Python 3.12 and 3.13 using tiny hand-made fixtures. Tripwire tests fail
+  if a change would alter what the trained brains sense, how the surrogate
+  body moves or how tasks are scored, any of which would invalidate the
+  published FlyLab scores.
+  [`playground-parity.yml`](.github/workflows/playground-parity.yml) checks
+  that the browser playground computes what the Python training code computes.
+- **Realism.** What is verified against the NeuroMechFly body and the
+  literature, and what is still simplified, is in the FlyLab
+  [engineering log](projects/09_flylab/README.md#making-skills-survive-the-jump-to-physics-engineering-log)
+  and the ranked [realism backlog](docs/realism-backlog.md).
 
 ## Repository layout
 
 ```
 FruitFlyBrain/
 ├── README.md · RESUME.md · CITATION.cff · LICENSE
-├── requirements.txt          # projects 01-08
+├── pyproject.toml            # metadata, dependency groups, ruff + pytest config
+├── requirements.txt          # projects 01-08 (exact pins)
+├── requirements-dev.txt      # + pytest / ruff (CI)
 ├── requirements-sim.txt      # project 09 (FlyGym / MuJoCo)
-├── download_datasets.py      # fetches the connectome data
+├── download_datasets.py      # fetches the connectome data, checksum-verified
 ├── make_gifs.py              # builds every animation in this README
 ├── datasets/                 # provenance docs (data itself is downloaded)
 ├── docs/gifs/                # the animations
+├── docs/realism-backlog.md   # what still differs from a real fly, ranked
+├── tests/                    # pytest suite on tiny fixtures (no downloads)
 └── projects/
     ├── 01_connectome_graph_analysis/    05_navis_3d_viewer/
     ├── 02_neurotransmitter_atlas/       06_celltype_classifier/
@@ -266,22 +329,24 @@ FruitFlyBrain/
         ├── supervise.py        # keeps every brain training, re-films and publishes
         ├── training/           # per-brain logs, curves and reports (TRAINING.md)
         ├── state/brains/       # the trained brains (~5 KB each)
+        ├── realism_checks.py   # re-measures the physics body the senses rely on
         └── dashboard/          # the live GitHub Pages dashboard
 ```
 
 ## Reproducing the animations
 
 ```bash
-.venv\Scripts\python make_gifs.py                    # projects 01-08 + FlyLab training curves
-.venv-sim\Scripts\python make_gifs.py flylab_videos  # FlyLab brain films
+.venv/bin/python make_gifs.py                     # projects 01-08 + FlyLab training curves
+.venv-sim/bin/python make_gifs.py flylab_videos   # FlyLab brain films
 ```
 
 Every animation is computed from the real data by each project's own code.
 Projects 06 and 08 re-run their pipelines and record the model while it trains.
 
 ## Environment used
-Python 3.12 · pandas 3.0 · numpy 2.5 · networkx 3.6 · matplotlib 3.11 · scipy 1.18 ·
-scikit-learn 1.9 · navis 1.12 · plotly 7.1 · FlyGym 2.1 · MuJoCo 3.9
+Python 3.12 (CI also runs 3.13) · numpy 2.5.4 · pandas 3.0.6 · networkx 3.6.1 ·
+matplotlib 3.11.2 · scipy 1.18.1 · scikit-learn 1.9.1 · navis 1.12.0 · plotly 7.1.0 ·
+FlyGym 2.1.0 · MuJoCo 3.9 (exact pins in `requirements*.txt`)
 
 ## Going further
 - **FlyWire synapse-level edges:** free account on [Codex](https://codex.flywire.ai),

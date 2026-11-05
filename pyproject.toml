@@ -1,0 +1,92 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+# FruitFlyBrain is a workspace of nine runnable projects, not an importable
+# library: every project is a script in projects/NN_name/. This file holds the
+# shared metadata, dependency groups and tool configuration for all of them.
+#
+#   pip install -r requirements.txt          # exact, tested pins (projects 01-08)
+#   pip install -r requirements-dev.txt      # + pytest / ruff (what CI runs)
+#   pip install -e ".[dev]"                  # same groups, version ranges instead of pins
+#
+# FlyLab (project 09) needs FlyGym/MuJoCo, which pin their own numpy/numba, so
+# it lives in a separate environment: requirements-sim.txt or ".[sim]".
+[project]
+name = "fruitflybrain"
+version = "1.1.0"
+description = "Drosophila connectome analysis, connectome ML and FlyLab, a physics-simulated fly that learns skills"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Rohit (ROHITCRAFTSYT)" }]
+requires-python = ">=3.12,<3.15"
+dependencies = [
+    "numpy>=2.0,<3",
+    "pandas>=3.0,<4",
+    "networkx>=3.4,<4",
+    "matplotlib>=3.10,<4",
+    "scipy>=1.15,<2",
+    "scikit-learn>=1.6,<2",
+]
+
+[project.optional-dependencies]
+# Project 05 (3-D neuron viewer) and its optional neuPrint fetch.
+viewer = ["navis>=1.10,<2", "plotly>=6,<8", "neuprint-python>=0.5,<1"]
+# Project 09 (FlyLab). Install into its own environment.
+sim = ["flygym==2.1.0", "matplotlib>=3.10,<4", "pillow>=11,<13"]
+dev = ["pytest>=9,<10", "pytest-cov>=7,<8", "ruff>=0.17,<0.18"]
+
+[project.urls]
+Homepage = "https://github.com/ROHITCRAFTSYT/FruitFlyBrain"
+Dashboard = "https://rohitcraftsyt.github.io/FruitFlyBrain/projects/09_flylab/dashboard/"
+
+[tool.setuptools]
+# Nothing to install as a package: the projects are run as scripts.
+packages = []
+py-modules = []
+
+# ---------------------------------------------------------------------------
+# Lint: `ruff check .` must pass (CI enforces it).
+# ---------------------------------------------------------------------------
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = ["datasets", ".venv", ".venv-sim"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W",   # pycodestyle
+    "F",        # pyflakes
+    "B",        # bugbear
+    "UP",       # pyupgrade
+    "ANN001",   # every function argument is annotated...
+    "ANN201",   # ...and every public function has a return type
+    "ANN206",
+]
+ignore = [
+    "E402",     # scripts put sys.path setup / matplotlib.use() before imports on purpose
+    "E702",     # FlyLab's compact `a.append(x); b.append(y)` style
+    "E731",     # small local lambdas
+    "E741",     # physics names such as I (intensity), l (left)
+    "B905",     # zip(strict=) would change behaviour of existing code paths
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests: fixtures and helpers do not need annotations.
+"tests/**" = ["ANN001", "ANN201", "ANN206"]
+"projects/09_flylab/tests/**" = ["ANN001", "ANN201", "ANN206"]
+# The lesson diary is an inline HTML/CSS template; its lines are page content.
+"projects/09_flylab/flylab.py" = ["E501"]
+
+[tool.ruff.lint.flake8-annotations]
+allow-star-arg-any = true
+suppress-dummy-args = true
+
+# ---------------------------------------------------------------------------
+# Tests: tiny fixtures only, no dataset downloads, no MuJoCo.
+# ---------------------------------------------------------------------------
+[tool.pytest.ini_options]
+testpaths = ["tests", "projects/09_flylab/tests"]
+addopts = "-ra --strict-markers"
+filterwarnings = ["ignore::DeprecationWarning:matplotlib.*"]

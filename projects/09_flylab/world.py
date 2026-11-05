@@ -26,22 +26,36 @@ REACH_RADIUS_MM = 1.5        # "arrived" if the thorax is within this of a targe
 SENSE_BETA = 0.4             # leaky sensory integration per 50 ms step (tau ~ 0.1 s)
 
 
-def odor_intensity(px, py, sx, sy):
+def odor_intensity(
+    px: np.ndarray | float,
+    py: np.ndarray | float,
+    sx: np.ndarray | float,
+    sy: np.ndarray | float,
+) -> np.ndarray | float:
     r = np.hypot(px - sx, py - sy)
     return np.exp(-r / ODOR_DECAY_MM)
 
 
-def light_intensity(px, py, sx, sy):
+def light_intensity(
+    px: np.ndarray | float,
+    py: np.ndarray | float,
+    sx: np.ndarray | float,
+    sy: np.ndarray | float,
+) -> np.ndarray | float:
     r = np.hypot(px - sx, py - sy)
     return 1.0 / (1.0 + (r / LIGHT_SCALE_MM) ** 2)
 
 
-def wrap(a):
+def wrap(a: np.ndarray | float) -> np.ndarray | float:
     """Wrap angles to (-pi, pi]."""
     return (a + np.pi) % (2 * np.pi) - np.pi
 
 
-def antenna_positions(x, y, th):
+def antenna_positions(
+    x: np.ndarray | float,
+    y: np.ndarray | float,
+    th: np.ndarray | float,
+) -> tuple[tuple[np.ndarray | float, np.ndarray | float], tuple[np.ndarray | float, np.ndarray | float]]:
     """World positions of the left and right antennae."""
     c, s = np.cos(th), np.sin(th)
     hx, hy = x + ANTENNA_FORWARD * c, y + ANTENNA_FORWARD * s
@@ -51,7 +65,13 @@ def antenna_positions(x, y, th):
     return (lx, ly), (rx, ry)
 
 
-def sense(x, y, th, stim, prev=None):
+def sense(
+    x: np.ndarray,
+    y: np.ndarray,
+    th: np.ndarray,
+    stim: dict[str, np.ndarray],
+    prev: dict[str, np.ndarray] | None = None,
+) -> tuple[np.ndarray, dict[str, np.ndarray]]:
     """
     Compute the brain's sensory vector for a batch of flies.
 
@@ -61,7 +81,7 @@ def sense(x, y, th, stim, prev=None):
         goal_on, goal_x, goal_y     navigation goal (a point to reach / face)
     `prev` is the previous step's raw intensities (for temporal change), or None.
 
-    Returns (features [..., 9], raw) where raw holds intensities for the next call.
+    Returns (features [..., N_SENSES=10], state) where state holds the integrator for the next call.
     """
     (lx, ly), (rx, ry) = antenna_positions(x, y, th)
 

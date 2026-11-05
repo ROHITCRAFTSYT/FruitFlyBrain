@@ -17,10 +17,8 @@ sessions. Type `help` for everything it understands.
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import sys
-import time
 from datetime import datetime
 from pathlib import Path
 
@@ -67,7 +65,7 @@ Continuous training of every brain (physics-validated): run train_brains.py
 """.rstrip()
 
 
-def banner(brain):
+def banner(brain: B.Brain) -> None:
     print("=" * 72)
     print("  FlyLab  |  a virtual Drosophila you can teach")
     print("  body: NeuroMechFly v2 (EPFL) in MuJoCo physics   brain: "
@@ -79,7 +77,7 @@ def banner(brain):
     print("Type a task (e.g. 'find the food'), or 'help'.")
 
 
-def ensure_calibrated():
+def ensure_calibrated() -> None:
     if (STATE / "calibration.npz").exists():
         return
     print("\nFirst run: measuring how the physics fly moves (one-time, a few minutes)...")
@@ -87,14 +85,14 @@ def ensure_calibrated():
     calibrate.main()
 
 
-def progress_bar(g, total, sr, mr):
+def progress_bar(g: int, total: int, sr: float, mr: float) -> None:
     w = 28
     k = int(w * g / total)
     print(f"\r    training [{'#' * k}{'.' * (w - k)}] gen {g:>3}/{total}  "
           f"success {sr:4.0%}  reward {mr:+.2f}", end="", flush=True)
 
 
-def show_skills(brain):
+def show_skills(brain: B.Brain) -> None:
     skills = brain.history["skills"]
     if not skills:
         print("  The fly hasn't learned anything yet. Try 'find the food'.")
@@ -110,7 +108,7 @@ def show_skills(brain):
     print(f"  total generations trained: {brain.history['generations_total']}")
 
 
-def open_file(path):
+def open_file(path: Path | str) -> None:
     try:
         if sys.platform.startswith("win"):
             os.startfile(str(path))  # noqa: S606
@@ -122,7 +120,7 @@ def open_file(path):
         pass
 
 
-def verdict_text(task, ok, traj, scen):
+def verdict_text(task: str, ok: bool, traj: dict, scen: T.Scenario) -> str:
     x, y = traj["x"][-1], traj["y"][-1]
     if task == "turn":
         err = np.degrees(abs(T.wrap(traj["th"][-1] - scen.extra["target_heading"][0])))
@@ -135,7 +133,16 @@ def verdict_text(task, ok, traj, scen):
     return f"{'SUCCESS' if ok else 'not quite'}: ended {df:.1f} mm from the target (started {d0:.1f} mm away)"
 
 
-def lesson(brain, body, command, task, params, args, generations=None, perform=True):
+def lesson(
+    brain: B.Brain,
+    body: SG.Body,
+    command: str,
+    task: str,
+    params: dict,
+    args: argparse.Namespace,
+    generations: int | None = None,
+    perform: bool = True,
+) -> dict:
     known = brain.history["skills"].get(task, {})
     if generations is None:
         if known.get("mastered"):
@@ -213,7 +220,7 @@ def lesson(brain, body, command, task, params, args, generations=None, perform=T
     return entry
 
 
-def write_diary(history):
+def write_diary(history: dict) -> None:
     """A local HTML page with every lesson: command, learning numbers, video, map."""
     rows = []
     for e in reversed(history["lessons"]):
@@ -249,7 +256,7 @@ DEMO = ["walk forward 12 mm", "turn left 90", "go to 8, -6", "find the food",
         "turn right 45", "find the food"]
 
 
-def handle(brain, body, cmd, args):
+def handle(brain: B.Brain, body: SG.Body, cmd: str, args: argparse.Namespace) -> bool:
     kind, what, params = T.parse(cmd)
     if kind == "unknown":
         print("  Hmm, the fly didn't understand that. Try 'help' for examples.")
@@ -286,7 +293,7 @@ def handle(brain, body, cmd, args):
     return True
 
 
-def main():
+def main() -> None:
     ap = argparse.ArgumentParser(description="Teach a virtual fruit fly.")
     ap.add_argument("command", nargs="*", help="a task, e.g. find the food (omit for interactive)")
     ap.add_argument("--no-physics", action="store_true", help="train only; skip the physics run")

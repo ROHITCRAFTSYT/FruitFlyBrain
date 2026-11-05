@@ -23,7 +23,8 @@ DT = 0.05                     # brain / surrogate control step (20 Hz)
 DR_GAIN = 0.2                 # domain randomization: +/-20% speed and turn gain
 DR_VEER = 0.25                # rad/s constant veer while walking (std)
 # Gait wobble measured on the physics fly at full stride (physics.py / README):
-# thorax position oscillates ~0.15 mm rms and yaw ~3.6 deg per step. It is
+# thorax position oscillates ~0.15 mm rms and yaw ~4 deg rms (the realism audit
+# re-measured 0.18 mm / 4.4 deg at drive 1.2; DR_YAW_WOBBLE uses 4 deg). It is
 # oscillatory (not a random walk), so it perturbs what the fly SENSES each step
 # without accumulating into its path.
 DR_JITTER_MM = 0.15
@@ -51,7 +52,7 @@ class Body:
             self.tau = 0.15
             self.calibrated = False
 
-    def _interp(self, table, dl, dr):
+    def _interp(self, table: np.ndarray, dl: np.ndarray | float, dr: np.ndarray | float) -> np.ndarray | float:
         g = self.grid
         fi = np.interp(dl, g, np.arange(len(g)))
         fj = np.interp(dr, g, np.arange(len(g)))
@@ -61,14 +62,23 @@ class Body:
         return ((1 - a) * (1 - b) * table[i0, j0] + a * (1 - b) * table[i0 + 1, j0]
                 + (1 - a) * b * table[i0, j0 + 1] + a * b * table[i0 + 1, j0 + 1])
 
-    def velocities(self, dl, dr):
+    def velocities(
+        self,
+        dl: np.ndarray | float,
+        dr: np.ndarray | float,
+    ) -> tuple[np.ndarray | float, np.ndarray | float, np.ndarray | float]:
         return (self._interp(self.v_fwd, dl, dr),
                 self._interp(self.v_lat, dl, dr),
                 self._interp(self.omega, dl, dr))
 
 
-def rollout(body: Body, theta: np.ndarray, scen: T.Scenario,
-            rng: np.random.Generator | None = None, noise: float = 1.0):
+def rollout(
+    body: Body,
+    theta: np.ndarray,
+    scen: T.Scenario,
+    rng: np.random.Generator | None = None,
+    noise: float = 1.0,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Simulate P brains x S scenarios in parallel.
     theta [P, N_PARAMS]. Returns xs, ys, ths [P, S, T+1] and drives [P, S, T, 2].
@@ -77,8 +87,13 @@ def rollout(body: Body, theta: np.ndarray, scen: T.Scenario,
                 B.task_cue(scen.task, (scen.n,)), int(round(scen.duration / DT)), rng, noise)
 
 
-def rollout_many(body: Body, theta: np.ndarray, scens: list,
-                 rng: np.random.Generator | None = None, noise: float = 1.0):
+def rollout_many(
+    body: Body,
+    theta: np.ndarray,
+    scens: list,
+    rng: np.random.Generator | None = None,
+    noise: float = 1.0,
+) -> list[tuple[np.ndarray, np.ndarray, np.ndarray]]:
     """
     Simulate several task scenarios (e.g. a new lesson + rehearsed skills) in ONE
     vectorized pass. Returns a list of (xs, ys, ths) per scenario group, each
@@ -98,7 +113,18 @@ def rollout_many(body: Body, theta: np.ndarray, scens: list,
     return out
 
 
-def _run(body, theta, x0, y0, th0, stim, cue_s, steps, rng, noise):
+def _run(
+    body: Body,
+    theta: np.ndarray,
+    x0: np.ndarray,
+    y0: np.ndarray,
+    th0: np.ndarray,
+    stim: dict[str, np.ndarray],
+    cue_s: np.ndarray,
+    steps: int,
+    rng: np.random.Generator | None,
+    noise: float,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     P, S = theta.shape[0], len(x0)
     x = np.broadcast_to(x0, (P, S)).copy()
     y = np.broadcast_to(y0, (P, S)).copy()

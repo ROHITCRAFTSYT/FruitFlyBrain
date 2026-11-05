@@ -19,7 +19,7 @@ STATE = HERE / "state"
 OUT = HERE / "outputs"
 
 
-def plot_calibration(c, path):
+def plot_calibration(c: dict, path: Path) -> None:
     g = c["grid"]
     fig, ax = plt.subplots(1, 3, figsize=(15, 4.4))
     for a, key, title, cmap, scale, unit in [
@@ -42,7 +42,7 @@ def plot_calibration(c, path):
     fig.tight_layout(); fig.savefig(path, dpi=130); plt.close(fig)
 
 
-def main():
+def main() -> None:
     import physics
     STATE.mkdir(exist_ok=True); OUT.mkdir(exist_ok=True)
     print("Calibrating the surrogate body against NeuroMechFly physics "

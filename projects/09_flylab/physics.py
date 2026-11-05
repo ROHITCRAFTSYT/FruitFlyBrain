@@ -15,8 +15,10 @@ forward in 1 s) while running ~20x faster on a laptop CPU.
 """
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import Any
+
 import time
-from pathlib import Path
 
 import mujoco as mj
 import numpy as np
@@ -38,20 +40,28 @@ CTRL_EVERY = 10                     # physics steps per controller update (1 kHz
 GEOM = mj.mjtGeom
 
 
-def _yaw_from_quat(q):
+def _yaw_from_quat(q: np.ndarray) -> float:
     w, x, y, z = q
     return np.arctan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z))
 
 
-def _quat_x(angle):
+def _quat_x(angle: float) -> list[float]:
     return [np.cos(angle / 2), np.sin(angle / 2), 0.0, 0.0]
 
 
 class PhysicsFly:
     """One NeuroMechFly in a flat arena, optionally with task markers + cameras."""
 
-    def __init__(self, markers=(), overhead=None, record=False, res=(360, 480),
-                 playback_speed=0.5, fps=25, colorize=True):
+    def __init__(
+        self,
+        markers: tuple | list = (),
+        overhead: tuple[float, float, float] | None = None,
+        record: bool = False,
+        res: tuple[int, int] = (360, 480),
+        playback_speed: float = 0.5,
+        fps: int = 25,
+        colorize: bool = True,
+    ) -> None:
         self.fly = make_locomotion_fly(name="fly", add_adhesion=True, colorize=colorize)
         cams = []
         if record:
@@ -88,7 +98,7 @@ class PhysicsFly:
         self.reset()
 
     @staticmethod
-    def _add_marker(wb, kind, x, y):
+    def _add_marker(wb: Any, kind: str, x: float, y: float) -> None:
         if kind == "food":        # a ripe drop of banana: yellow-green, glossy
             wb.add_geom(type=GEOM.mjGEOM_SPHERE, size=[0.9, 0, 0], pos=[x, y, 0.9],
                         rgba=[0.75, 0.9, 0.1, 1], contype=0, conaffinity=0)
@@ -100,6 +110,11 @@ class PhysicsFly:
             wb.add_geom(type=GEOM.mjGEOM_CYLINDER, size=[4.0, 0.01, 0], pos=[x, y, 0.02],
                         rgba=[0.55, 0.1, 0.6, 0.25], contype=0, conaffinity=0)
         elif kind == "light":     # a glowing lamp on a thin post
+            # Drawn for visibility, NOT where the brain senses it: world.py puts the
+            # lamp LIGHT_HEIGHT_MM = 1.0 above the eyes (measured eye height 1.17 mm,
+            # so ~2.2 mm above ground), while this sphere is centred at 4.0 mm. The
+            # markers have no collision, so this affects the films only.
+            # See docs/realism-backlog.md.
             wb.add_geom(type=GEOM.mjGEOM_SPHERE, size=[1.1, 0, 0], pos=[x, y, 4.0],
                         rgba=[1.0, 0.95, 0.4, 1], contype=0, conaffinity=0)
             wb.add_geom(type=GEOM.mjGEOM_CYLINDER, size=[0.12, 2.0, 0], pos=[x, y, 2.0],
@@ -115,7 +130,7 @@ class PhysicsFly:
                         rgba=[0.9, 0.15, 0.15, 1], contype=0, conaffinity=0)
 
     # -- basic control -------------------------------------------------------
-    def reset(self):
+    def reset(self) -> None:
         self.sim.reset()
         self.ctrl.reset(seed=0)
         apply_locomotion_action(self.sim, self.fly.name, LocomotionAction(
@@ -124,12 +139,12 @@ class PhysicsFly:
         self.sim.warmup()
         self.n = 0
 
-    def pose(self):
+    def pose(self) -> tuple[float, float, float]:
         p = self.sim.get_body_positions(self.fly.name)[self.i_thorax]
         q = np.asarray(self.sim.get_body_rotations(self.fly.name))[self.i_thorax]
         return float(p[0]), float(p[1]), float(_yaw_from_quat(q))
 
-    def advance(self, drive, seconds):
+    def advance(self, drive: np.ndarray | list[float] | tuple[float, float], seconds: float) -> None:
         """Hold a descending drive [L, R] for `seconds` of physics."""
         drive = np.asarray(drive, dtype=float)
         for _ in range(int(round(seconds / self.sim.timestep))):
@@ -141,7 +156,7 @@ class PhysicsFly:
                 self.sim.render_as_needed()
             self.n += 1
 
-    def antenna_offsets(self):
+    def antenna_offsets(self) -> list[tuple[float, float]]:
         """Measured arista positions in the thorax frame (forward, left) in mm."""
         P = self.sim.get_body_positions(self.fly.name)
         x, y, th = self.pose()
@@ -155,7 +170,12 @@ class PhysicsFly:
 # ---------------------------------------------------------------------------
 # Calibration: measure how the real body moves for each pair of drives
 # ---------------------------------------------------------------------------
-def calibrate(grid=(-0.5, 0.0, 0.15, 0.3, 0.6, 0.9, 1.2), trial_s=1.3, skip_s=0.4, log=print):
+def calibrate(
+    grid: tuple[float, ...] = (-0.5, 0.0, 0.15, 0.3, 0.6, 0.9, 1.2),
+    trial_s: float = 1.3,
+    skip_s: float = 0.4,
+    log: Callable[[str], None] = print,
+) -> dict:
     fly = PhysicsFly(record=False, colorize=False)
     g = np.asarray(grid, float)
     n = len(g)
@@ -202,7 +222,7 @@ def calibrate(grid=(-0.5, 0.0, 0.15, 0.3, 0.6, 0.9, 1.2), trial_s=1.3, skip_s=0.
 # ---------------------------------------------------------------------------
 # Deployment: run a trained brain inside the physics fly
 # ---------------------------------------------------------------------------
-def markers_for(scen: T.Scenario):
+def markers_for(scen: T.Scenario) -> list[dict]:
     t = scen.task
     if t in ("odor_seek",):
         return [dict(kind="food", x=float(scen.stim["odor_x"][0]), y=float(scen.stim["odor_y"][0]))]
@@ -215,7 +235,7 @@ def markers_for(scen: T.Scenario):
     return []
 
 
-def overhead_for(scen: T.Scenario):
+def overhead_for(scen: T.Scenario) -> tuple[float, float, float]:
     if scen.task == "turn":
         return (0.0, 0.0, 22.0)
     if "target" in scen.extra:
@@ -229,7 +249,12 @@ def overhead_for(scen: T.Scenario):
     return (cx, cy, h)
 
 
-def deploy(theta: np.ndarray, scen: T.Scenario, record=True, log=print):
+def deploy(
+    theta: np.ndarray,
+    scen: T.Scenario,
+    record: bool = True,
+    log: Callable[[str], None] | None = print,
+) -> tuple[dict, dict]:
     """Run the brain in the physics fly for the scenario's duration (S must be 1)."""
     pf = PhysicsFly(markers=markers_for(scen), overhead=overhead_for(scen), record=record)
     steps = int(round(scen.duration / DT))

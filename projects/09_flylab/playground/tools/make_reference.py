@@ -3,7 +3,9 @@
 For every trained brain, on one fixed and one random arena, this steps the exact
 functions used in training (world.sense, brain.act, surrogate.Body) with noise
 off and records every sensory vector, drive and pose, plus tasks.score's verdict.
-It first checks that this loop reproduces surrogate.rollout's drives.
+It first checks that this loop reproduces surrogate.rollout's drives. The
+integrator state and motor lag after every step are recorded too, so the
+browser engine can be re-synced to Python before each step (see check_core.mjs).
 
     ..\\..\\..\\..\\.venv-sim\\Scripts\\python make_reference.py   ->  reference.json
     node check_core.mjs                                            ->  compares flybrain.js
@@ -32,12 +34,13 @@ for task in T.TASKS:
         stim = {k: v[:1] for k, v in scen.stim.items()}
         cue = B.task_cue(task, (1, 1))
         d_eff, prev, alpha = np.zeros(2), None, SG.DT / body.tau
-        feats_log, drives_log, pose = [], [], [[x, y, th]]
+        feats_log, drives_log, pose, filt_log, deff_log = [], [], [[x, y, th]], [], []
         for _ in range(steps):
             f, prev = sense(np.array([[x]]), np.array([[y]]), np.array([[th]]), stim, prev)
             d = B.act(theta[None], f, cue)[0, 0]
             feats_log.append(f[0, 0].tolist()); drives_log.append(d.tolist())
             d_eff += alpha * (d - d_eff)
+            filt_log.append(prev["filt"][0, 0].tolist()); deff_log.append(d_eff.tolist())
             v, u, w = body.velocities(d_eff[0], d_eff[1])
             c, s = np.cos(th), np.sin(th)
             x, y, th = x + (v * c - u * s) * SG.DT, y + (v * s + u * c) * SG.DT, th + w * SG.DT
@@ -52,7 +55,8 @@ for task in T.TASKS:
         if "target_heading" in scen.extra:
             arena["targetHeading"] = float(scen.extra["target_heading"][0])
         cases.append({"task": task, "kind": kind, "arena": arena, "feats": feats_log,
-                      "drives": drives_log, "pose": pose, "success": bool(ok[0, 0])})
+                      "drives": drives_log, "pose": pose, "filt": filt_log, "d_eff": deff_log,
+                      "success": bool(ok[0, 0])})
         print(f"{task:<13} {kind:<6} steps={steps:<4} python verdict={'pass' if ok[0, 0] else 'fail'}")
 
 (Path(__file__).parent / "reference.json").write_text(json.dumps({"cases": cases}))

@@ -2,7 +2,8 @@
 
 > **Watch it train:** the [live training dashboard](https://rohitcraftsyt.github.io/FruitFlyBrain/projects/09_flylab/dashboard/)
 > shows every brain's progress, held-out physics results and real MuJoCo footage, updated hourly
-> by the training supervisor. How realistic the simulation is: [REALISM_AUDIT.md](REALISM_AUDIT.md).
+> by the training supervisor. How realistic the simulation is: [REALISM_AUDIT.md](REALISM_AUDIT.md)
+> (2026-09 audit) and [docs/realism-backlog.md](../../docs/realism-backlog.md) (what is still open, ranked).
 
 Type what you want the fly to do in plain English (*"find the food"*, *"go to the
 light"*, *"turn left 90"*). The fly's brain **trains on that task**, then the
@@ -23,7 +24,8 @@ physics fly succeeded on **7 of 9** commanded tasks right after each lesson.
 It walked 12 mm and stopped within 1.2 mm, turned 90° to within 3°, found food
 by smell alone, walked to a lamp by sight, fled a light and a repellent, and
 re-learned a partly forgotten turn in 19 s (54% → 98%) instead of the original
-48 s. Both misses were close approaches just outside the 2 mm success radius.
+48 s. Both misses were close approaches just outside the 2 mm success radius
+(the demo predates the stricter v2 rules: 1.5 mm *and* standing still).
 
 <p align="center">
   <img src="outputs/demo/find_the_food.png" width="32%" alt="find the food map">
@@ -69,8 +71,8 @@ commands to the ventral nerve cord that patterns the legs.
 
 **Why a surrogate?** On a laptop CPU the full physics fly runs at ~0.4× real
 time, so training directly in physics would take ~30–50 min per skill. Instead,
-`calibrate.py` measures the real body once: for 36 combinations of left/right
-drive, it records forward speed, sideways slip and turning rate in MuJoCo, plus
+`calibrate.py` measures the real body once: for 49 combinations of left/right
+drive (a 7 × 7 grid), it records forward speed, sideways slip and turning rate in MuJoCo, plus
 the CPG response lag. The surrogate replays those measurements, so thousands
 of flies train in parallel in seconds. The trained brain then runs in the real
 physics fly (**sim-to-sim transfer**), and every lesson's map overlays the
@@ -110,6 +112,14 @@ Every fix below came from watching the physics fly fail and measuring why:
 | On 2026-10-25 at 19:12 the hourly watchdog logged `process query ... failed (code 3221225786)`, then started a guardian that stepped aside because the old one was alive | the PowerShell process query itself exited with 0xC000013A (console-control exit, not a FlyLab process), so its empty output read as "no guardian". The step-aside guard prevented a duplicate, but the false launch was avoidable | a failed process query is now retried once before its result is used, and each attempt is logged. Nothing about training changed |
 | On 2026-10-26 autostart.log showed a supervisor exit with code 0x40010004 at 00:46 and, after the next boot, `FAILED to start guardian` with empty output at 19:09 | 0x40010004 (DBG_TERMINATE_PROCESS) came 2 s after a clean Start-menu shutdown (System event 1074 at 00:46:52), so it was the shutdown and not a kill. The failed launch was a WMI call 8 min after boot that returned nothing; the next watchdog run at 19:16 succeeded, so the supervisor was down 7 extra minutes | the guardian now labels 0x40010004 as a Windows shutdown/sign-out, and `ensure` retries a failed launch once after 30 s, logging the PowerShell exit code. A spare guardian still steps aside, so the retry cannot cause duplicates. Nothing about training changed |
 | On 2026-10-27 `autostart.py status` listed 4 guardian and 4 supervisor pids | Another project on this PC (Readback) started its own `autostart.py guard` and `supervise.py` on 10-26, and the FlyLab process queries matched any command line containing `autostart.py*guard` or `supervise.py`. FlyLab only ran because its guardian booted 20 s before the other one. In the reverse order, a new FlyLab guardian would see more than 2 "other guardians" and exit, `ensure` would report "already running", and the guardian would wait forever on the other `supervise.py`, so training would stay down all day | both queries are now anchored to this folder's absolute path, and the guardian launches `supervise.py` by absolute path so its command line carries the folder. Checked live: only FlyLab's pids match. Nothing about training changed |
+| 2026-11-05 realism re-check: docs said the gait wobble is **0.15 mm and 3.6° per step**, while the surrogate trains with 4° | re-measured in physics with the new read-only `realism_checks.py` (drive 1.2/1.2, 1 kHz samples): yaw **4.38° rms** at an **11.8 Hz** peak, the 12 Hz CPG of FlyGym's controller (`flygym_demo/complex_terrain/cpg_controller.py`, `intrinsic_frequency=12.0`), and thorax sway 0.18 mm ([audit §8](REALISM_AUDIT.md)). The code (`surrogate.DR_YAW_WOBBLE = 4°`) was right and the text was wrong | README and the `surrogate.py` comment now say 4° rms. Nothing about training changed |
+| Docs said turns happen **"on the spot"** (`brain.py`, the command table) | FlyGym 2.1's `HybridTurningController.step` (`flygym_demo/complex_terrain/turning_controller.py`) sets each side's CPG amplitude to \|drive\| and only flips the frequency sign for a negative drive, and the tripod coupling resists opposite stepping. The audit's fact-check measured the tightest turn at a ~1.5–1.7 mm radius, with sideways slip faster than forward speed ([audit F8](REALISM_AUDIT.md)) | the docs now describe what the body does (turn success allows 6 mm of drift). Real pivoting needs a controller subclass: [backlog B5](../../docs/realism-backlog.md). Nothing about training changed |
+| README said calibration measures **36** drive combinations | `physics.calibrate`'s default grid has 7 values (7 × 7 = **49**), and `state/calibration.npz` holds that 7-value grid | text corrected |
+| README defined **optimal** as ≥95% on 24 validation arenas | `train_brains.is_optimal` also requires ≥95% in the surrogate, ≥90% on the 32 held-out test arenas, and the current `TASK_VERSION` (added after [audit F2](REALISM_AUDIT.md)) | text corrected. `tests/test_flylab_core.py` now pins the rule |
+| In the films the lamp hangs **4 mm** up, but the brain senses it about **2.2 mm** up | measured eye height 1.17 mm + `world.LIGHT_HEIGHT_MM` (1.0 mm) = 2.17 mm. The drawn sphere is centred at 4.0 mm and the scene light sits at 5.0 mm. Markers have no collision (`contype=0`), so scores are unaffected | documented in `physics.py`. Moving the marker needs a visual check of the films on the training PC: [backlog B9](../../docs/realism-backlog.md) |
+| Light direction is computed from the **thorax**, but the eyes sit **0.26 mm** farther forward | measured (`realism_checks.py`): a lamp 1 / 2 / 5 mm away at 60° from the thorax is at 74.5° / 66.9° / 62.6° from the eyes, so the bearing error is largest exactly where `light_seek` stops | **not changed**: it alters what the light brains see, so it would void their scores. [Backlog B4](../../docs/realism-backlog.md) |
+| Physics settings re-verified against FlyGym 2.1 itself, with no change needed | `flygym/assets/model/neuromechfly/mujoco_globals.yaml`: timestep **1e-4 s (10 kHz)**, gravity 9810 mm/s², Euler integrator. 42 actuated leg DoFs. Controller every 10 steps = **1 kHz**. Body mass summed from `rigging.yaml` = **1.00 mg**, in line with the ~10 µN weight of a typical fly (Dickinson & Götz 1996, *J Exp Biol* 199:2085; the ~1 mg conversion is ours). Aristae measured at (0.517, ±0.188) mm vs 0.52 / ±0.19 in `world.py`. Full-stride speed 16.3 mm/s vs 16.2 in the calibration | none |
+| The Playground parity CI has been **red since 2026-10-27**, although the browser port is exact | the polished `light_seek` brain parks under the lamp, where the light-change input (×200) amplifies 1e-15 rounding differences between V8 and NumPy to 2e-8, which exceeds the 1e-9 bound. Re-synced to Python's state before every step, the port agrees to ≤8e-14, and the verdicts agree 14/14 | `check_core.mjs` now checks the port step by step (bound 1e-9) and the free run separately (same verdict, pose within 1e-6 mm; worst seen 2.6e-10 mm) |
 
 Physics-transfer success (random arenas in full MuJoCo, same evaluator
 throughout): **67%** (first version) → **86%** (domain randomization, fresh
@@ -178,9 +188,11 @@ The loop always trains the **weakest** skill next, is fully **resumable**
 surrogate success) doubles the validation and held-out test sets
 (6/8 → 12/16 → 24/32 arenas). The champion is re-scored on the bigger sets
 and training continues. After level 1 FlyLab just performs the skill instead
-of retraining it. A brain counts as **optimal** once it scores ≥95% on 24
-validation arenas at level 3, so a lucky streak on a handful of arenas can't
-end its training.
+of retraining it. A brain counts as **optimal** once, at level 3, it scores
+≥95% on the 24 validation arenas *and* ≥95% in the surrogate *and* ≥90% on the
+32 held-out test arenas, under the current task rules (`tasks.TASK_VERSION`).
+A lucky streak on a handful of arenas can't end its training, and a brain
+scored under older rules is re-scored first (`train_brains.is_optimal`).
 
 **Unattended loop.** `supervise.py` runs one trainer process per skill, two at
 a time on a 2-core CPU. Turns are round-robin (weakest skill first) in 1-hour
@@ -238,7 +250,7 @@ cd projects\09_flylab
 | `hide from the light`, `avoid the light` | Hide from light | two eyes only |
 | `go to 10, 5` | Go to a location (mm, fly starts at 0,0 facing +x) | goal compass |
 | `walk forward 12 mm` | Walk forward and stop | goal compass |
-| `turn left 90`, `turn right 45`, `turn around` | Turn on the spot | goal compass |
+| `turn left 90`, `turn right 45`, `turn around` | Turn (ending within 6 mm of the start; the body can't pivot on the spot) | goal compass |
 | `practice find the food 200` | extra training, no video | — |
 | `skills`, `show`, `reset`, `help`, `quit` | status / replay / newborn brain | — |
 
@@ -273,6 +285,8 @@ Flags: `--no-video` (physics but no rendering, faster), `--no-physics`
 | `render_brains.py` | re-films brains that changed, for the dashboard and README |
 | `reflexes.py` | innate reflexes used to seed brains that can't get started (chemotaxis, escape) |
 | `playground/` | in-browser brain playground (see above) |
+| `realism_checks.py` | read-only re-measurement of the body facts the senses rely on (timestep, aristae, eyes, gait) |
+| `tests/` | polish-rollback test; the rest of the suite lives in the repo's top-level `tests/` |
 
 ## Honest limits
 

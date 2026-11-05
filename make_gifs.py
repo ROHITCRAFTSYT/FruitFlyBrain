@@ -10,6 +10,11 @@ Output: docs/gifs/*.gif
 """
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import pandas as pd
+
 import json
 import sys
 import time
@@ -30,7 +35,7 @@ DPI = 80
 plt.rcParams.update({"font.size": 10, "axes.titleweight": "bold"})
 
 
-def save(anim, name, fps):
+def save(anim: FuncAnimation, name: str, fps: int) -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     path = OUT / f"{name}.gif"
     anim.save(path, writer=PillowWriter(fps=fps), dpi=DPI)
@@ -38,18 +43,18 @@ def save(anim, name, fps):
     print(f"  wrote {path.relative_to(ROOT)}  ({path.stat().st_size // 1024} KB)", flush=True)
 
 
-def frames_with_hold(n, hold):
+def frames_with_hold(n: int, hold: int) -> list[int]:
     """Frame indices 0..n-1, then repeat the last frame `hold` times."""
     return list(range(n)) + [n - 1] * hold
 
 
-def hemibrain():
+def hemibrain() -> tuple[pd.DataFrame, pd.DataFrame]:
     from _common import load_hemibrain
     return load_hemibrain()
 
 
 # --- 01: the connectome backbone assembling -------------------------------
-def p01():
+def p01() -> None:
     import networkx as nx
     conn, neurons = hemibrain()
     strength = (conn.groupby("bodyId_pre")["weight"].sum()
@@ -65,7 +70,7 @@ def p01():
     steps = 30
     cut = np.linspace(1, len(e), steps).astype(int)
 
-    def draw(i):
+    def draw(i: int) -> None:
         ax.clear(); ax.axis("off")
         sub = e.iloc[:cut[i]]
         deg = sub.groupby("bodyId_pre")["weight"].sum().add(
@@ -86,7 +91,7 @@ def p01():
 
 
 # --- 02: whole-brain census counting up -----------------------------------
-def p02():
+def p02() -> None:
     import pandas as pd
     from _common import FLYWIRE_NEURONS
     df = pd.read_csv(FLYWIRE_NEURONS, sep="\t", usecols=["super_class", "top_nt"], low_memory=False)
@@ -97,7 +102,7 @@ def p02():
     fig, ax = plt.subplots(1, 2, figsize=(10, 4.6))
     steps = 25
 
-    def draw(i):
+    def draw(i: int) -> None:
         f = (i + 1) / steps
         for a in ax:
             a.clear()
@@ -114,7 +119,7 @@ def p02():
 
 
 # --- 03: a signal pulse travelling the strongest KC -> MBON routes --------
-def p03():
+def p03() -> None:
     import networkx as nx
     conn, neurons = hemibrain()
     id2type = dict(zip(neurons.bodyId, neurons.type.fillna("?")))
@@ -143,10 +148,10 @@ def p03():
     per_hop = 6
     total = sum(max(1, len(p) - 1) * per_hop for p in paths)
 
-    def draw(i):
+    def draw(i: int) -> None:
         ax.clear(); ax.axis("off")
         t = i
-        for k, lane in enumerate(lanes):
+        for lane in lanes:
             hops = max(1, len(lane) - 1)
             prog = np.clip(t / per_hop, 0, hops)
             t -= hops * per_hop
@@ -171,7 +176,7 @@ def p03():
 
 
 # --- 04: activity cascade through the central complex ---------------------
-def p04():
+def p04() -> None:
     conn, neurons = hemibrain()
     pref = ("EPG", "PEN", "PEG", "ER", "EL", "FB", "PB", "DELTA7", "FC", "FS", "PFN")
     sub = neurons[neurons.type.fillna("").str.upper().str.startswith(pref)]
@@ -195,7 +200,7 @@ def p04():
     side = int(np.ceil(np.sqrt(n)))
     fig, ax = plt.subplots(1, 2, figsize=(10, 4.4))
 
-    def draw(t):
+    def draw(t: int) -> None:
         for a in ax:
             a.clear()
         img = np.zeros(side * side); img[:n] = hist[t][order]
@@ -214,7 +219,7 @@ def p04():
 
 
 # --- 05: real neurons rotating in 3-D ---------------------------------------
-def p05():
+def p05() -> None:
     import navis
     nl = navis.NeuronList(navis.example_neurons(5))
     nl = navis.downsample_neuron(nl, 4, inplace=False)
@@ -230,13 +235,13 @@ def p05():
     ax.set_axis_off()
     ax.set_title("Project 05 - five real hemibrain neurons (NAVis)", fontsize=10)
 
-    def draw(i):
+    def draw(i: int) -> None:
         ax.view_init(elev=-70 + 20 * np.sin(i / 36 * 2 * np.pi), azim=-90 + i * 10)
     save(FuncAnimation(fig, draw, frames=36), "p05_neurons_3d", 10)
 
 
 # --- 06: the cell-type classifier's neural net training --------------------
-def p06():
+def p06() -> None:
     import importlib.util
     from sklearn.model_selection import train_test_split
     from sklearn.neural_network import MLPClassifier
@@ -260,14 +265,14 @@ def p06():
     classes = np.unique(ytr)
     loss, acc_tr, acc_te = [], [], []
     rng = np.random.default_rng(0)
-    for ep in range(40):
+    for _ep in range(40):
         p = rng.permutation(len(Xtr))
         for k in range(0, len(p), 256):
             mlp.partial_fit(Xtr[p[k:k + 256]], ytr[p[k:k + 256]], classes=classes)
         loss.append(mlp.loss_); acc_tr.append(mlp.score(Xtr, ytr)); acc_te.append(mlp.score(Xte, yte))
     fig, ax = plt.subplots(1, 2, figsize=(10, 4.2))
 
-    def draw(i):
+    def draw(i: int) -> None:
         for a in ax:
             a.clear()
         ep = np.arange(1, i + 2)
@@ -285,7 +290,7 @@ def p06():
 
 
 # --- 07: t-SNE unfolding the connectivity embedding ------------------------
-def p07():
+def p07() -> None:
     from scipy import sparse
     from sklearn.decomposition import TruncatedSVD
     from sklearn.manifold import TSNE
@@ -308,7 +313,7 @@ def p07():
     col = np.array([cmap(list(top).index(f)) for f in fam[pick]])
     fig, ax = plt.subplots(figsize=(7, 6))
 
-    def draw(i):
+    def draw(i: int) -> None:
         k = min(i // 3, len(snaps) - 1)
         it, xy = snaps[k]
         if k + 1 < len(snaps) and i < 3 * (len(snaps) - 1):
@@ -325,7 +330,7 @@ def p07():
 
 
 # --- 08: link-prediction model training (ROC sharpening) -------------------
-def p08():
+def p08() -> None:
     import importlib.util
     from scipy import sparse
     from sklearn.ensemble import HistGradientBoostingClassifier
@@ -356,7 +361,7 @@ def p08():
     stages = [s for s in stages if s in probs]
     fig, ax = plt.subplots(figsize=(6.4, 5.6))
 
-    def draw(i):
+    def draw(i: int) -> None:
         s = stages[i]; fpr, tpr, _ = roc_curve(yte, probs[s])
         ax.clear(); ax.plot([0, 1], [0, 1], "--", color="grey")
         for s0 in stages[:i]:
@@ -369,7 +374,7 @@ def p08():
 
 
 # --- 09a: all seven FlyLab brains training over rounds ----------------------
-def p09_training():
+def p09_training() -> None:
     sys.path.insert(0, str(PROJ / "09_flylab"))
     tasks = ["walk_forward", "turn", "goto", "odor_seek", "odor_avoid", "light_seek", "light_avoid"]
     pretty = {"walk_forward": "Walk forward", "turn": "Turn in place", "goto": "Go to a location",
@@ -386,7 +391,7 @@ def p09_training():
     steps = 40
     cmap = plt.get_cmap("tab10")
 
-    def draw(i):
+    def draw(i: int) -> None:
         ax.clear()
         upto = int(np.ceil((i + 1) / steps * maxr))
         for k, (t, rows) in enumerate(runs.items()):
@@ -408,7 +413,7 @@ def p09_training():
 
 
 # --- 09b: each brain's physics film (needs .venv-sim for imageio) ----------
-def flylab_videos():
+def flylab_videos() -> None:
     import imageio.v2 as imageio
     from PIL import Image
     vdir = PROJ / "09_flylab" / "dashboard" / "videos"

@@ -1,0 +1,7 @@
+root_id	super_class	top_nt	side	cell_type
+101	central	Acetylcholine	left	KCg-m
+102	central	acetylcholine	right	KCg-m
+103	optic	GABA	left	Mi1
+104	optic	glutamate	right	
+105			center	APL
+106	descending	acetylcholine		DNa01

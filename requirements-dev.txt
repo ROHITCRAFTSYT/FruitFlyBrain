@@ -1,0 +1,13 @@
+# Test + lint tooling (what CI runs). Pulls in the pinned project dependencies
+# except the 3-D viewer extras, which the tests do not need.
+#   pip install -r requirements-dev.txt
+#   ruff check . && pytest
+numpy==2.5.4
+pandas==3.0.6
+networkx==3.6.1
+matplotlib==3.11.2
+scipy==1.18.1
+scikit-learn==1.9.1
+pytest==9.2.0
+pytest-cov==7.1.0
+ruff==0.17.3

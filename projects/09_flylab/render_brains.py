@@ -21,6 +21,9 @@ Runs at BELOW_NORMAL priority so it never slows down the continuous trainer.
 """
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import Any
+
 import sys
 
 if sys.platform == "win32":                       # yield the CPU to the trainer
@@ -64,18 +67,18 @@ MARKER = {"walk_forward": "goal flag", "goto": "goal flag", "odor_seek": "food",
           "odor_avoid": "repellent", "light_seek": "lamp", "light_avoid": "lamp"}
 
 
-def demo_seed(task):
+def demo_seed(task: str) -> int:
     return DEMO_SEED + T.TASKS.index(task)
 
 
-def unit_of(task):
+def unit_of(task: str) -> str:
     return UNITS.get(task, "mm")
 
 
 # ---------------------------------------------------------------------------
 # outcome (same definitions as train_brains._error_of and tasks.score)
 # ---------------------------------------------------------------------------
-def outcome(task, scen, traj):
+def outcome(task: str, scen: T.Scenario, traj: dict) -> tuple[bool, float, str]:
     """(success, final_error, sentence). final_error uses the trainer's units."""
     _, ok = T.score(scen, traj["x"][None], traj["y"][None], traj["th"][None])
     ok = bool(ok[0])
@@ -89,12 +92,13 @@ def outcome(task, scen, traj):
     df = float(np.hypot(x[-1] - tx, y[-1] - ty))
     if task in ("odor_avoid", "light_avoid"):
         gain = df - float(np.hypot(x[0] - tx, y[0] - ty))
-        return ok, round(gain, 1), f"moved {gain:+.1f} mm further away (pass: > {T.AVOID_GAIN_MM:.0f} mm, never approaching)"
+        return ok, round(gain, 1), (f"moved {gain:+.1f} mm further away "
+                                    f"(pass: > {T.AVOID_GAIN_MM:.0f} mm, never approaching)")
     return ok, round(df, 2), (f"ended {df:.2f} mm from the {MARKER[task]} "
                               f"(pass: < {T.SUCCESS_RADIUS_MM} mm and standing still)")
 
 
-def describe_arena(task, scen):
+def describe_arena(task: str, scen: T.Scenario) -> str:
     if task == "turn":
         a = float(np.degrees(scen.extra["target_heading"][0]))
         return f"turn {abs(a):.0f} deg {'left' if a > 0 else 'right'} in place"
@@ -107,7 +111,7 @@ def describe_arena(task, scen):
 # ---------------------------------------------------------------------------
 # video
 # ---------------------------------------------------------------------------
-def _minimap(d, box, scen, traj, upto):
+def _minimap(d: ImageDraw.ImageDraw, box: tuple[int, int, int, int], scen: T.Scenario, traj: dict, upto: int) -> None:
     """Top-down trace (fly path so far, start, target) drawn into box=(x0,y0,x1,y1)."""
     x0, y0, x1, y1 = box
     d.rectangle(box, fill=(28, 28, 34), outline=(80, 80, 90))
@@ -119,7 +123,7 @@ def _minimap(d, box, scen, traj, upto):
     span = max(max(px) - min(px), max(py) - min(py), 8.0) + 4.0
     s = min(x1 - x0, y1 - y0) / span
 
-    def P(x, y):
+    def P(x: float, y: float) -> tuple[float, float]:
         return ((x0 + x1) / 2 + (x - cx) * s, (y0 + y1) / 2 - (y - cy) * s)
     if "target" in scen.extra:
         tx, ty = P(float(scen.extra["target"][0][0]), float(scen.extra["target"][1][0]))
@@ -143,7 +147,17 @@ def _minimap(d, box, scen, traj, upto):
     d.line([fx, fy, fx + 12 * np.cos(th), fy - 12 * np.sin(th)], fill=(255, 255, 255), width=2)
 
 
-def write_video(frames, traj, scen, task, header, verdict, ok, mp4, png):
+def write_video(
+    frames: list[np.ndarray],
+    traj: dict,
+    scen: T.Scenario,
+    task: str,
+    header: str,
+    verdict: str,
+    ok: bool,
+    mp4: Path,
+    png: Path,
+) -> tuple[float, float]:
     names = list(frames.keys())
     n = min(len(frames[c]) for c in names)
     # The recorder runs at REC_PLAYBACK x speed (0.5x -> 50 frames per sim second).
@@ -198,7 +212,7 @@ def write_video(frames, traj, scen, task, header, verdict, ok, mp4, png):
     return len(ks) / OUT_FPS, speed
 
 
-def probe(mp4):
+def probe(mp4: Path) -> tuple[int, float, str | None, tuple | None]:
     """(frames, duration_s) read back from the file, to prove it decodes."""
     r = imageio.get_reader(str(mp4))
     meta = r.get_meta_data()
@@ -208,14 +222,14 @@ def probe(mp4):
 
 
 # ---------------------------------------------------------------------------
-def read_json(p, default):
+def read_json(p: Path | str, default: Any) -> Any:
     try:
         return json.loads(Path(p).read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return default
 
 
-def write_index(entries):
+def write_index(entries: list[dict]) -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     order = {t: i for i, t in enumerate(T.TASKS)}
     vids = sorted(entries.values(), key=lambda v: order.get(v["skill"], 99))
@@ -224,7 +238,7 @@ def write_index(entries):
     os.replace(tmp, OUT / "index.json")
 
 
-def load_brain(task):
+def load_brain(task: str) -> tuple[np.ndarray, dict]:
     """Deployed weights + the status they belong to (re-read if the trainer swaps mid-read)."""
     for _ in range(5):
         st = read_json(TRAIN / task / "status.json", {})
@@ -236,7 +250,7 @@ def load_brain(task):
     return theta, st2
 
 
-def render_skill(task, log=print):
+def render_skill(task: str, log: Callable[[str], None] = print) -> tuple[dict, dict]:
     t0 = time.time()
     theta, st = load_brain(task)
     best = st.get("best") or {}
@@ -266,7 +280,7 @@ def render_skill(task, log=print):
     return entry, {"wall_s": round(wall, 1), "bytes": nbytes, "frames": nfr, "codec": codec}
 
 
-def main():
+def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--skills", nargs="+", default=list(T.TASKS), choices=T.TASKS)
     ap.add_argument("--changed-only", action="store_true",

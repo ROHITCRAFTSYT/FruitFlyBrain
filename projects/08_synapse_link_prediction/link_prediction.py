@@ -47,7 +47,13 @@ N_TEST_PAIRS = 40_000     # positive test edges (+ equal negatives)
 RANDOM_STATE = 42
 
 
-def sample_non_edges(n, edge_keys, count, rng, exclude_self=True):
+def sample_non_edges(
+    n: int,
+    edge_keys: np.ndarray,
+    count: int,
+    rng: np.random.Generator,
+    exclude_self: bool = True,
+) -> tuple[np.ndarray, np.ndarray]:
     """Sample `count` ordered pairs (i, j) that are NOT edges, via sorted-key lookup."""
     out_i, out_j = [], []
     need = count
@@ -68,7 +74,18 @@ def sample_non_edges(n, edge_keys, count, rng, exclude_self=True):
     return np.concatenate(out_i), np.concatenate(out_j)
 
 
-def edge_features(si, tj, emb_out, emb_in, out_str, in_str, out_deg, in_deg, edge_keys, n):
+def edge_features(
+    si: np.ndarray,
+    tj: np.ndarray,
+    emb_out: np.ndarray,
+    emb_in: np.ndarray,
+    out_str: np.ndarray,
+    in_str: np.ndarray,
+    out_deg: np.ndarray,
+    in_deg: np.ndarray,
+    edge_keys: np.ndarray,
+    n: int,
+) -> np.ndarray:
     """Directed pair features: output/input embedding compatibility + structure."""
     had = emb_out[si] * emb_in[tj]                     # (m, EMB_DIM)
     rev_keys = tj.astype(np.int64) * n + si.astype(np.int64)
@@ -113,7 +130,7 @@ def main() -> None:
     A_tr_csc = A_tr.tocsc()
     in_deg = np.diff(A_tr_csc.indptr)
 
-    def feats(si, tj):
+    def feats(si: np.ndarray, tj: np.ndarray) -> np.ndarray:
         return edge_features(si, tj, emb_out, emb_in, out_str, in_str,
                              out_deg, in_deg, all_keys, n)
 
@@ -164,7 +181,7 @@ def main() -> None:
     print(f"\nWrote metrics + curves to {OUT}")
 
 
-def TruncatedSVD_fit(mat):
+def TruncatedSVD_fit(mat: sparse.csr_matrix) -> np.ndarray:
     from sklearn.decomposition import TruncatedSVD
     return TruncatedSVD(EMB_DIM, random_state=RANDOM_STATE).fit_transform(mat)
 
