@@ -40,10 +40,13 @@ more. Used by project 2.
 | | |
 |---|---|
 | **Source (official)** | FlyWire consortium (Princeton U. / MRC LMB) — `flyconnectome/flywire_annotations` |
-| **Download URL** | `https://raw.githubusercontent.com/flyconnectome/flywire_annotations/main/supplemental_files/` |
+| **Download URL** | `https://raw.githubusercontent.com/flyconnectome/flywire_annotations/17fc57722002e1a7d38cdd0c89ac382bf92718da/supplemental_files/` |
+| **Pinned commit** | [`17fc577`](https://github.com/flyconnectome/flywire_annotations/commit/17fc57722002e1a7d38cdd0c89ac382bf92718da) (2026-05-04). The repo's `main` branch keeps changing: from 2026-09-29 it gives 8,846 cell types instead of 8,840, so `download_datasets.py` fetches this commit |
 | **Portal** | https://codex.flywire.ai · https://flywire.ai |
 | **License** | CC BY 4.0 |
 | **SHA-256 (file1)** | `9a4f8b2f843196074431ebd7cd883536afa1be86c8a4ce90970441e8be81d1be` |
+| **SHA-256 (file2)** | `2349fd5b4b9e53fd1b4a84aa73230bb7bebe66faa5d6a7490155aa2128861de1` |
+| **SHA-256 (file3)** | `8e9d92c0263c19863da3d537400bc2fe5ab6ed19e8327b0237e1e8a60ef9cfa5` |
 
 Files:
 - `Supplemental_file1_neuron_annotations.tsv` — 139,248 neurons × 31 attributes
@@ -62,7 +65,8 @@ Files:
 
 ## Re-downloading
 
-From the repo root:
+The easy way is `python download_datasets.py`, which fetches every file and checks each
+SHA-256 above. To do it by hand, from the repo root:
 
 ```bash
 # hemibrain (~46 MB)
@@ -72,7 +76,7 @@ tar -xzf datasets/hemibrain/exported-traced-adjacencies-v1.2.tar.gz -C datasets/
 
 # FlyWire annotations (~32 MB)
 curl -L -o datasets/flywire_fafb/Supplemental_file1_neuron_annotations.tsv \
-  https://raw.githubusercontent.com/flyconnectome/flywire_annotations/main/supplemental_files/Supplemental_file1_neuron_annotations.tsv
+  https://raw.githubusercontent.com/flyconnectome/flywire_annotations/17fc57722002e1a7d38cdd0c89ac382bf92718da/supplemental_files/Supplemental_file1_neuron_annotations.tsv
 ```
 
 ## Want the full FlyWire *connectivity* edges too?
