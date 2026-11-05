@@ -19,6 +19,12 @@ import numpy as np
 
 FLYLAB = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(FLYLAB))
+if "physics" not in sys.modules:   # run without FlyGym/MuJoCo (CI): physics_eval is stubbed below anyway
+    try:
+        import flygym  # noqa: F401
+    except ImportError:
+        import types
+        sys.modules["physics"] = types.ModuleType("physics")
 import brain as B                  # noqa: E402
 import surrogate as SG             # noqa: E402
 import train_brains as TB          # noqa: E402
@@ -67,6 +73,17 @@ def main():
     assert run.status["best"]["physics_reward"] > reward, "a good polish must raise the recorded reward"
     print("ok  polish that stays optimal is kept")
     shutil.rmtree(tmp, ignore_errors=True)
+
+
+def test_polish_rollback() -> None:
+    """pytest entry point: same checks as running this file directly."""
+    saved = {k: getattr(TB, k) for k in ("TRAIN_DIR", "STATE", "write_skill_report", "write_summary",
+                                         "_update_flylab_history", "ROUND_GENS", "physics_eval")}
+    try:
+        main()
+    finally:                       # make_sandbox() rewires train_brains globals; put them back
+        for k, v in saved.items():
+            setattr(TB, k, v)
 
 
 if __name__ == "__main__":
