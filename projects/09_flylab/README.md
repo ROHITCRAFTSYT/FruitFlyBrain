@@ -210,12 +210,15 @@ Once installed, the whole loop runs by itself on the training PC:
 | `train_brains.py --polish` | when a core is free | keeps training an optimal brain; the result is kept **only if it is still optimal afterwards** (a candidate that scores higher on validation but falls under 90% on the held-out test is rolled back), so a deployed brain never regresses |
 | `daily.py` | once a day | `recheck.py` re-runs every optimal brain on **16 new random physics arenas** (a new set every day) → [`training/CHECKS.md`](training/CHECKS.md); rewrites the README status table; regenerates the GIFs and brain films |
 | `autostart.py` | at sign-in + hourly | a small **guardian** runs the supervisor and restarts it within ~15 s whenever it exits, logging the exit code to `training/logs/autostart.log`; a Startup-folder entry and the hourly Windows task *FlyLab supervisor watchdog* keep the guardian itself running (idempotent: never a second copy) |
+| `daily_commit.py` | sign-in, unlock, 21:00 (wakes the PC; a missed run happens as soon as it is back) | guarantees **one local commit every day** even if the supervisor is down: appends a dated brain-status entry to [`training/daily/`](training/daily/) and commits it with any training output not yet committed. It only commits those paths, never code or anything you staged, and exits at once if today is already done (Windows task *FlyLab daily commit*, log `training/logs/daily_commit.log`) |
 | daily AI review | every evening, ~21:15 (Claude app) | reads the logs and checks; if a skill is stuck or a fresh check drops under 80%, it diagnoses the cause, fixes it, documents it in the engineering log above and pushes |
 
 ```bash
 ..\..\.venv-sim\Scripts\python autostart.py status    # running? installed?
 ..\..\.venv-sim\Scripts\python autostart.py install   # set it up on a new PC
 ..\..\.venv-sim\Scripts\python autostart.py remove    # uninstall the autostart pieces
+..\..\.venv-sim\Scripts\python daily_commit.py status # today's commit done? task state + recent log
+..\..\.venv-sim\Scripts\python daily_commit.py install # (re)register the daily-commit task
 ```
 
 Notes: the supervisor keeps Windows from sleeping while it trains
@@ -282,11 +285,12 @@ Flags: `--no-video` (physics but no rendering, faster), `--no-physics`
 | `supervise.py` | runs the trainers unattended: priorities, polishing, daily job, hourly git push |
 | `daily.py` / `recheck.py` | daily fresh-arena physics checks, README status table, GIF refresh |
 | `autostart.py` | guardian (restarts the supervisor in seconds, logs exit codes) + sign-in entry and hourly watchdog task that keep the guardian running |
+| `daily_commit.py` | once-a-day local commit (dated status entry in `training/daily/` + pending output), independent of the supervisor |
 | `render_brains.py` | re-films brains that changed, for the dashboard and README |
 | `reflexes.py` | innate reflexes used to seed brains that can't get started (chemotaxis, escape) |
 | `playground/` | in-browser brain playground (see above) |
 | `realism_checks.py` | read-only re-measurement of the body facts the senses rely on (timestep, aristae, eyes, gait) |
-| `tests/` | polish-rollback test; the rest of the suite lives in the repo's top-level `tests/` |
+| `tests/` | polish-rollback and daily-commit tests; the rest of the suite lives in the repo's top-level `tests/` |
 
 ## Honest limits
 
