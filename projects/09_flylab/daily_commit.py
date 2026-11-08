@@ -208,7 +208,7 @@ def run(repo: Path = REPO, flylab: Path = HERE, today: date | None = None, push:
     paths = [f"{rel}/{p}" for p in FLYLAB_PATHS] + REPO_PATHS
     paths = [p for p in paths if (repo / p).exists()]
     msg_lines = [f"{SUBJECT} {today.isoformat()}", ""]
-    status = git(repo, "status", "--porcelain", "--", *paths).stdout.splitlines()
+    status = git(repo, "status", "--porcelain", "--untracked-files=all", "--", *paths).stdout.splitlines()
     extra = [l[3:] for l in status if not l[3:].endswith(journal.name)]
     msg_lines.append(f"Daily entry in {journal.relative_to(repo).as_posix()}"
                      + (f", plus {len(extra)} uncommitted training output file(s)." if extra else "."))
