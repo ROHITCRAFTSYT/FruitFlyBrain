@@ -1,9 +1,9 @@
 {
   "task": "light_avoid",
-  "round": 632,
-  "generations": 63200,
-  "physics_runs": 15440,
-  "stale": 1,
+  "round": 637,
+  "generations": 63700,
+  "physics_runs": 15560,
+  "stale": 2,
   "best": {
     "round": 159,
     "physics_val": 1.0,
