@@ -1,9 +1,9 @@
 {
   "task": "light_seek",
-  "round": 501,
-  "generations": 50100,
-  "physics_runs": 8904,
-  "stale": 2,
+  "round": 504,
+  "generations": 50400,
+  "physics_runs": 8976,
+  "stale": 1,
   "best": {
     "round": 375,
     "physics_val": 1.0,
