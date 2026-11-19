@@ -1,9 +1,9 @@
 {
   "task": "odor_seek",
-  "round": 272,
-  "generations": 27200,
-  "physics_runs": 6022,
-  "stale": 0,
+  "round": 274,
+  "generations": 27400,
+  "physics_runs": 6070,
+  "stale": 2,
   "best": {
     "round": 240,
     "physics_val": 1.0,
