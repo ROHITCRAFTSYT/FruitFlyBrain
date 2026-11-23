@@ -34,7 +34,7 @@ dependencies = [
 # Project 05 (3-D neuron viewer) and its optional neuPrint fetch.
 viewer = ["navis>=1.10,<2", "plotly>=6,<8", "neuprint-python>=0.5,<1"]
 # Project 09 (FlyLab). Install into its own environment.
-sim = ["flygym==2.1.0", "matplotlib>=3.10,<4", "pillow>=11,<13"]
+sim = ["flygym==2.1.0", "matplotlib>=3.10,<4", "pillow>=11,<14"]
 dev = ["pytest>=9,<10", "pytest-cov>=7,<8", "ruff>=0.17,<0.18"]
 
 [project.urls]
