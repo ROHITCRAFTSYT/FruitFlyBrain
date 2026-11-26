@@ -1,9 +1,9 @@
 {
   "task": "goto",
-  "round": 426,
-  "generations": 42600,
-  "physics_runs": 10174,
-  "stale": 2,
+  "round": 427,
+  "generations": 42700,
+  "physics_runs": 10198,
+  "stale": 3,
   "best": {
     "round": 176,
     "physics_val": 1.0,
